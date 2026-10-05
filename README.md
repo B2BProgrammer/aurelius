@@ -15,19 +15,6 @@ admin and more time with clients.
 | ChromaDB             | 8600 |
 | React console        | 5173 |
 
-## Build steps
-- [x] Step 01 - Folder structure
-- [ ] Step 02 - Shared agent contract (JSON schema)
-- [ ] Step 03 - Conductor orchestrator + LLM client
-- [ ] Step 04 - RAG: ingestion + Librarian agent
-- [ ] Step 05 - MCP server + Analyst agent
-- [ ] Step 06 - Sentinel security agent
-- [ ] Step 07 - Node agents
-- [ ] Step 08 - Java agents
-- [ ] Step 09 - Go agent
-- [ ] Step 10 - React console
-- [ ] Step 11 - docker-compose, end-to-end test
-
 
 
 ```mermaid
