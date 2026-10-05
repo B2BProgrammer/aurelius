@@ -1,0 +1,36 @@
+{
+  // Base config: used by your editor and by "npm run typecheck" (source + tests + scripts).
+  // "npm run build" uses tsconfig.build.json, which extends this one and emits only src/.
+  "compilerOptions": {
+    // --- Language & runtime -------------------------------------------------
+    "target": "ES2023",                 // Node 20+ supports ES2023 natively, no down-levelling
+    "lib": ["ES2023"],
+    "module": "NodeNext",               // real Node ESM ("type": "module" in package.json)
+    "moduleResolution": "NodeNext",     // relative imports need the .js extension, like Node itself
+    "types": ["node"],                  // TypeScript 7 no longer auto-loads @types/*, list them
+
+    // --- Strictness (catch bugs at compile time) ----------------------------
+    "strict": true,                     // strictNullChecks, noImplicitAny, ...
+    "noUncheckedIndexedAccess": true,   // obj[key] is "T | undefined" until you check it
+    "exactOptionalPropertyTypes": true, // { due?: string } cannot be set to undefined by accident
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "useUnknownInCatchVariables": true, // catch (err) gives "unknown", not "any"
+
+    // --- Module hygiene -----------------------------------------------------
+    "verbatimModuleSyntax": true,       // type-only imports must say "import type"
+    "isolatedModules": true,            // every file compiles on its own (tsx/esbuild-safe)
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+
+    // --- Output (overridden in tsconfig.build.json) -------------------------
+    "noEmit": true,
+    "sourceMap": true
+  },
+  "include": ["src", "tests", "scripts"]
+}

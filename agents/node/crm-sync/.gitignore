@@ -1,0 +1,7 @@
+node_modules/
+dist/
+# live CRM data (rebuilt from crm.seed.json) and audit log
+data/crm.json
+data/crm.json.tmp
+logs/
+*.tsbuildinfo

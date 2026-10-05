@@ -1,0 +1,138 @@
+{
+  "_note": "Fallback copy of the MCP server's holdings (as of 2026-10-01), merged by symbol. Used ONLY when the MCP server can't be reached.",
+  "clients": {
+    "patel-001": {
+      "household": "Patel household",
+      "as_of": "2026-10-01",
+      "total_market_value": 2350000.0,
+      "positions": [
+        {
+          "symbol": "USTM",
+          "name": "US Total Market Index Fund",
+          "asset_class": "equity",
+          "security_type": "fund",
+          "market_value": 969000.0
+        },
+        {
+          "symbol": "AGGB",
+          "name": "US Aggregate Bond Index Fund",
+          "asset_class": "fixed_income",
+          "security_type": "fund",
+          "market_value": 470000.0
+        },
+        {
+          "symbol": "XYZ",
+          "name": "XYZ Corp (fictional)",
+          "asset_class": "equity",
+          "security_type": "stock",
+          "market_value": 329000.0
+        },
+        {
+          "symbol": "INTL",
+          "name": "International Developed Equity Index Fund",
+          "asset_class": "equity",
+          "security_type": "fund",
+          "market_value": 300000.0
+        },
+        {
+          "symbol": "AIBF",
+          "name": "Aurelius International Bond Fund (fictional)",
+          "asset_class": "fixed_income",
+          "security_type": "fund",
+          "market_value": 188000.0
+        },
+        {
+          "symbol": "MMKT",
+          "name": "Government Money Market Fund",
+          "asset_class": "cash",
+          "security_type": "cash",
+          "market_value": 94000.0
+        }
+      ]
+    },
+    "chen-002": {
+      "household": "Chen family",
+      "as_of": "2026-10-01",
+      "total_market_value": 900000.25,
+      "positions": [
+        {
+          "symbol": "AGGB",
+          "name": "US Aggregate Bond Index Fund",
+          "asset_class": "fixed_income",
+          "security_type": "fund",
+          "market_value": 495000.0
+        },
+        {
+          "symbol": "USTM",
+          "name": "US Total Market Index Fund",
+          "asset_class": "equity",
+          "security_type": "fund",
+          "market_value": 220000.0
+        },
+        {
+          "symbol": "INTL",
+          "name": "International Developed Equity Index Fund",
+          "asset_class": "equity",
+          "security_type": "fund",
+          "market_value": 140000.25
+        },
+        {
+          "symbol": "MMKT",
+          "name": "Government Money Market Fund",
+          "asset_class": "cash",
+          "security_type": "cash",
+          "market_value": 45000.0
+        }
+      ]
+    },
+    "garcia-003": {
+      "household": "Garcia household",
+      "as_of": "2026-10-01",
+      "total_market_value": 1000000.0,
+      "positions": [
+        {
+          "symbol": "USTM",
+          "name": "US Total Market Index Fund",
+          "asset_class": "equity",
+          "security_type": "fund",
+          "market_value": 300000.0
+        },
+        {
+          "symbol": "ABC",
+          "name": "ABC Industries (fictional)",
+          "asset_class": "equity",
+          "security_type": "stock",
+          "market_value": 220000.0
+        },
+        {
+          "symbol": "MMKT",
+          "name": "Government Money Market Fund",
+          "asset_class": "cash",
+          "security_type": "cash",
+          "market_value": 150000.0
+        },
+        {
+          "symbol": "AGGB",
+          "name": "US Aggregate Bond Index Fund",
+          "asset_class": "fixed_income",
+          "security_type": "fund",
+          "market_value": 150000.0
+        },
+        {
+          "symbol": "INTL",
+          "name": "International Developed Equity Index Fund",
+          "asset_class": "equity",
+          "security_type": "fund",
+          "market_value": 135000.0
+        },
+        {
+          "symbol": "EMKT",
+          "name": "Emerging Markets Equity Fund",
+          "asset_class": "equity",
+          "security_type": "fund",
+          "market_value": 45000.0
+        }
+      ]
+    }
+  }
+}

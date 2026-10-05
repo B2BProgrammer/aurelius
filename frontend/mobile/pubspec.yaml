@@ -1,0 +1,23 @@
+name: atrium_mobile
+description: "Atrium mobile: the Aurelius advisor app in Flutter. Talks only to the Conductor."
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # HTTP calls to the Conductor (and the live news stream)
+  http: ^1.2.2
+  # Keeps the sign-in token in the phone's keystore (Android Keystore / iOS Keychain)
+  flutter_secure_storage: ^9.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

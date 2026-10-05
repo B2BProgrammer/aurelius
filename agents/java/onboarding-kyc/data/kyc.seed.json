@@ -1,0 +1,87 @@
+{
+  "clients": {
+    "patel-001": {
+      "household": "Patel household",
+      "source_of_funds": "Employment income and savings",
+      "risk_questionnaire_date": "2026-03-12",
+      "members": [
+        { "member_id": "patel-001-m1", "name": "Raj Patel", "role": "primary", "dob": "1968-03-14", "citizenship": "US",
+          "trusted_contact": true, "screening": { "last_screened": "2026-02-01", "result": "clear" } },
+        { "member_id": "patel-001-m2", "name": "Anita Patel", "role": "spouse", "dob": "1970-05-20", "citizenship": "US",
+          "trusted_contact": false, "screening": { "last_screened": "2026-02-01", "result": "clear" } }
+      ],
+      "accounts": [
+        { "account_id": "PAT-JOINT", "type": "TAXABLE", "owner": "patel-001-m1" },
+        { "account_id": "PAT-RAJ-IRA", "type": "IRA", "owner": "patel-001-m1" },
+        { "account_id": "PAT-ANITA-ROLL", "type": "IRA", "owner": "patel-001-m2" }
+      ],
+      "documents": [
+        { "doc_id": "D-1001", "member_id": "patel-001-m1", "type": "GOVERNMENT_ID", "label": "Driver's license",
+          "number_last4": "4417", "issued": "2018-11-15", "expires": "2026-11-15", "verified": true },
+        { "doc_id": "D-1002", "member_id": "patel-001-m2", "type": "GOVERNMENT_ID", "label": "US passport",
+          "number_last4": "9032", "issued": "2019-05-02", "expires": "2029-05-01", "verified": true },
+        { "doc_id": "D-1003", "member_id": "patel-001-m1", "type": "PROOF_OF_ADDRESS", "label": "Utility bill",
+          "issued": "2025-08-01", "verified": true },
+        { "doc_id": "D-1004", "member_id": "patel-001-m1", "type": "W9", "label": "Form W-9",
+          "issued": "2023-01-10", "verified": true },
+        { "doc_id": "D-1005", "member_id": "patel-001-m1", "type": "BENEFICIARY_DESIGNATION", "label": "IRA beneficiary form",
+          "account_id": "PAT-RAJ-IRA", "issued": "2009-04-20", "verified": true },
+        { "doc_id": "D-1006", "member_id": "patel-001-m2", "type": "BENEFICIARY_DESIGNATION", "label": "Rollover IRA beneficiary form",
+          "account_id": "PAT-ANITA-ROLL", "issued": "2024-02-01", "verified": true }
+      ]
+    },
+    "chen-002": {
+      "household": "Chen family",
+      "source_of_funds": "Business sale proceeds (2019) and pension",
+      "risk_questionnaire_date": "2024-08-19",
+      "members": [
+        { "member_id": "chen-002-m1", "name": "Wei Chen", "role": "primary", "dob": "1954-01-09", "citizenship": "US",
+          "trusted_contact": false, "screening": { "last_screened": "2026-01-15", "result": "clear" } },
+        { "member_id": "chen-002-m2", "name": "Lin Chen", "role": "spouse", "dob": "1956-04-02", "citizenship": "US",
+          "trusted_contact": false, "screening": { "last_screened": "2025-07-02", "result": "clear" } }
+      ],
+      "accounts": [
+        { "account_id": "CHN-JOINT", "type": "TAXABLE", "owner": "chen-002-m1" },
+        { "account_id": "CHN-WEI-IRA", "type": "IRA", "owner": "chen-002-m1" }
+      ],
+      "documents": [
+        { "doc_id": "D-2001", "member_id": "chen-002-m1", "type": "GOVERNMENT_ID", "label": "US passport",
+          "number_last4": "7310", "issued": "2020-03-01", "expires": "2030-02-28", "verified": true },
+        { "doc_id": "D-2002", "member_id": "chen-002-m2", "type": "GOVERNMENT_ID", "label": "State ID card",
+          "number_last4": "5521", "issued": "2019-08-20", "expires": "2027-08-20", "verified": true },
+        { "doc_id": "D-2003", "member_id": "chen-002-m1", "type": "PROOF_OF_ADDRESS", "label": "Property tax statement",
+          "issued": "2022-03-01", "verified": true },
+        { "doc_id": "D-2004", "member_id": "chen-002-m1", "type": "W9", "label": "Form W-9",
+          "issued": "2021-05-12", "verified": true },
+        { "doc_id": "D-2005", "member_id": "chen-002-m1", "type": "BENEFICIARY_DESIGNATION", "label": "IRA beneficiary form",
+          "account_id": "CHN-WEI-IRA", "issued": "2020-06-10", "verified": true }
+      ]
+    },
+    "garcia-003": {
+      "household": "Garcia household",
+      "risk_questionnaire_date": "2026-01-20",
+      "members": [
+        { "member_id": "garcia-003-m1", "name": "Maria Garcia", "role": "primary", "dob": "1977-02-11", "citizenship": "US",
+          "trusted_contact": true, "screening": { "last_screened": "2026-01-20", "result": "clear" } },
+        { "member_id": "garcia-003-m2", "name": "Luis Garcia", "role": "spouse", "dob": "1974-08-30", "citizenship": "MX",
+          "trusted_contact": false },
+        { "member_id": "garcia-003-m3", "name": "Diego Garcia", "role": "dependent", "dob": "2009-05-05", "citizenship": "US",
+          "trusted_contact": false }
+      ],
+      "accounts": [
+        { "account_id": "GAR-JOINT", "type": "TAXABLE", "owner": "garcia-003-m1" },
+        { "account_id": "GAR-MARIA-IRA", "type": "IRA", "owner": "garcia-003-m1" }
+      ],
+      "documents": [
+        { "doc_id": "D-3001", "member_id": "garcia-003-m1", "type": "GOVERNMENT_ID", "label": "Driver's license",
+          "number_last4": "8806", "issued": "2020-02-11", "expires": "2028-02-11", "verified": true },
+        { "doc_id": "D-3002", "member_id": "garcia-003-m1", "type": "PROOF_OF_ADDRESS", "label": "Bank statement",
+          "issued": "2024-11-01", "verified": true },
+        { "doc_id": "D-3003", "member_id": "garcia-003-m1", "type": "W9", "label": "Form W-9",
+          "issued": "2026-01-20", "verified": true }
+      ]
+    }
+  },
+  "processed": {},
+  "next_doc_number": 5001
+}

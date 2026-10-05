@@ -1,0 +1,17 @@
+{
+  "_note": "Where each security sits, so a news event about a region or sector can be matched to holdings. Fictional reference data.",
+  "symbols": {
+    "XYZ":  { "region": "us",            "sector": "technology" },
+    "ABC":  { "region": "us",            "sector": "industrials" },
+    "USTM": { "region": "us",            "sector": "broad_market" },
+    "USLC": { "region": "us",            "sector": "broad_market" },
+    "INTL": { "region": "international", "sector": "broad_market" },
+    "INTX": { "region": "international", "sector": "broad_market" },
+    "EMKT": { "region": "emerging",      "sector": "broad_market" },
+    "EMKX": { "region": "emerging",      "sector": "broad_market" },
+    "AIBF": { "region": "international", "sector": "bonds" },
+    "GIBX": { "region": "international", "sector": "bonds" },
+    "AGGB": { "region": "us",            "sector": "bonds" },
+    "MMKT": { "region": "us",            "sector": "cash" }
+  }
+}

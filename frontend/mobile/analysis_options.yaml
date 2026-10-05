@@ -1,0 +1,15 @@
+# `flutter analyze` uses these rules. flutter_lints is the Flutter team's recommended set.
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    prefer_single_quotes: true
+    prefer_final_locals: true
+    avoid_print: true
+    always_declare_return_types: true

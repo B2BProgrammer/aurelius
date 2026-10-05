@@ -1,0 +1,38 @@
+# Notary settings.
+# ${NAME:default} = read NAME from: real environment variables, then onboarding-kyc\.env,
+# then aurelius\.env (loaded by NotaryApplication.main), else use the default.
+
+server:
+  port: ${NOTARY_PORT:8201}
+  address: ${NOTARY_HOST:127.0.0.1}
+  error:
+    include-stacktrace: never      # never leak stack traces to callers
+
+spring:
+  application:
+    name: notary
+  main:
+    banner-mode: off
+
+notary:
+  service-token: ${SERVICE_TOKEN:}
+  data-file: ${KYC_DATA_FILE:data/kyc.json}           # working copy, created from the seed
+  seed-file: ${KYC_SEED_FILE:data/kyc.seed.json}
+  watchlist-file: ${KYC_WATCHLIST_FILE:data/watchlist.json}
+  audit-file: ${KYC_AUDIT_FILE:logs/audit.jsonl}
+  expiring-window-days: ${KYC_EXPIRING_WINDOW_DAYS:60}
+  match-threshold: ${KYC_MATCH_THRESHOLD:0.88}
+
+springdoc:
+  api-docs:
+    path: /openapi.json
+  swagger-ui:
+    path: /docs                    # /docs redirects to /swagger-ui/index.html
+    persist-authorization: true
+    display-request-duration: true
+    tags-sorter: alpha
+
+logging:
+  structured:
+    format:
+      console: ecs                 # one JSON object per line, like the other agents

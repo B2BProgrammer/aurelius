@@ -1,0 +1,94 @@
+{
+  "note": "Fictional sample CRM data for the Aurelius learning project. Copied to crm.json on first start.",
+  "next_ids": { "task": 1100, "note": 5100 },
+  "households": {
+    "patel-001": {
+      "household": "Patel household",
+      "segment": "Private Client",
+      "advisor_id": "dev-advisor",
+      "members": [
+        { "name": "Raj Patel", "role": "primary", "age": 58, "email": "raj.patel@example.com", "phone": "312-555-0101" },
+        { "name": "Anita Patel", "role": "spouse", "age": 56, "email": "anita.patel@example.com", "phone": "312-555-0102" }
+      ],
+      "preferences": {
+        "contact_channel": "email",
+        "communication_style": "Prefers short, plain-language emails. Anita handles scheduling. Use first names.",
+        "salutation": "Raj and Anita"
+      },
+      "accounts": [
+        { "account_id": "PAT-JOINT", "type": "taxable" },
+        { "account_id": "PAT-RAJ-IRA", "type": "ira" },
+        { "account_id": "PAT-ANITA-ROLL", "type": "ira" }
+      ],
+      "last_contact": "2026-07-14",
+      "next_review": "2026-10-08",
+      "service_alerts": [],
+      "tasks": [
+        { "task_id": "T-1001", "title": "Update beneficiary form for Raj's IRA", "owner": "advisor", "due": "2026-04-30", "status": "open", "created": "2026-04-10" },
+        { "task_id": "T-1002", "title": "Model retirement at 62 and 63 and send both scenarios", "owner": "advisor", "due": "2026-10-01", "status": "open", "created": "2026-07-14" },
+        { "task_id": "T-1003", "title": "Collect Raj's pay stub for the 401(k) match review", "owner": "client", "due": "2026-05-15", "status": "done", "created": "2026-04-10", "completed": "2026-05-02" }
+      ],
+      "notes": [
+        { "note_id": "N-5001", "date": "2026-04-10", "type": "meeting", "author": "dev-advisor", "text": "Annual review. Portfolio up for the year. Raj plans to work until 64. Anita asked about the international bond fund; revisit next meeting." },
+        { "note_id": "N-5002", "date": "2026-07-14", "type": "meeting", "author": "dev-advisor", "text": "Mid-year check-in. Raj now wants to retire at 62. Daughter Priya's wedding June 2027, about $60k. Both worried about XYZ concentration and taxes on selling." }
+      ]
+    },
+    "chen-002": {
+      "household": "Chen family",
+      "segment": "Wealth Management",
+      "advisor_id": "dev-advisor",
+      "members": [
+        { "name": "Wei Chen", "role": "primary", "age": 72, "email": "wei.chen@example.com", "phone": "630-555-0201" },
+        { "name": "Lin Chen", "role": "spouse", "age": 70, "email": "lin.chen@example.com", "phone": "630-555-0202" }
+      ],
+      "preferences": {
+        "contact_channel": "phone",
+        "communication_style": "Formal tone. Prefers a phone call before any email with numbers.",
+        "salutation": "Mr. and Mrs. Chen"
+      },
+      "accounts": [
+        { "account_id": "CHN-JOINT", "type": "taxable" },
+        { "account_id": "CHN-WEI-IRA", "type": "ira" }
+      ],
+      "last_contact": "2026-06-02",
+      "next_review": "2026-12-03",
+      "service_alerts": [],
+      "tasks": [
+        { "task_id": "T-1004", "title": "Send RMD estimate for Wei", "owner": "advisor", "due": "2027-01-15", "status": "open", "created": "2026-06-02" },
+        { "task_id": "T-1005", "title": "Explain qualified charitable distributions", "owner": "advisor", "due": "2026-12-03", "status": "open", "created": "2026-06-02" }
+      ],
+      "notes": [
+        { "note_id": "N-5003", "date": "2026-06-02", "type": "meeting", "author": "dev-advisor", "text": "Annual review. On target, comfortable with conservative mix. Wei turns 73 next year; asked about RMDs. Lin interested in charitable giving from the IRA." }
+      ]
+    },
+    "garcia-003": {
+      "household": "Garcia household",
+      "segment": "Private Client",
+      "advisor_id": "dev-advisor",
+      "members": [
+        { "name": "Maria Garcia", "role": "primary", "age": 49, "email": "maria.garcia@example.com", "phone": "773-555-0301" },
+        { "name": "Luis Garcia", "role": "spouse", "age": 52, "email": "luis.garcia@example.com", "phone": "773-555-0302" },
+        { "name": "Diego Garcia", "role": "dependent", "age": 17 }
+      ],
+      "preferences": {
+        "contact_channel": "email",
+        "communication_style": "Maria wants detail and written follow-ups. Luis prefers the short version.",
+        "salutation": "Maria and Luis"
+      },
+      "accounts": [
+        { "account_id": "GAR-JOINT", "type": "taxable" },
+        { "account_id": "GAR-MARIA-IRA", "type": "ira" }
+      ],
+      "last_contact": "2026-09-05",
+      "next_review": "2026-12-10",
+      "service_alerts": ["Maria was unhappy that last year's report arrived late. Send all reports on time; escalate any delay."],
+      "tasks": [
+        { "task_id": "T-1006", "title": "Send written summary of ABC concentration discussion and bonus investment plan", "owner": "advisor", "due": "2026-09-20", "status": "open", "created": "2026-09-05" },
+        { "task_id": "T-1007", "title": "Luis to consider a gradual diversification plan for ABC", "owner": "client", "status": "open", "created": "2026-09-05" }
+      ],
+      "notes": [
+        { "note_id": "N-5004", "date": "2026-09-05", "type": "meeting", "author": "dev-advisor", "text": "Portfolio review. Bonus in money market. Luis reluctant to sell ABC (former employer) and asked to buy more; documented concentration risk. Maria concerned about exposure; threatened complaint over late report. Son starts college fall 2027." }
+      ]
+    }
+  }
+}

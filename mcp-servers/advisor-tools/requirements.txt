@@ -1,0 +1,8 @@
+# advisor-tools MCP server dependencies
+mcp>=2.3,<3             # official Model Context Protocol SDK (v2: MCPServer, streamable HTTP)
+uvicorn[standard]>=0.30 # serves the MCP app over HTTP
+pydantic-settings>=2.3  # settings from .env
+
+# testing
+pytest>=8
+httpx>=0.27

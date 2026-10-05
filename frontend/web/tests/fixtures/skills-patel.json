@@ -1,0 +1,192 @@
+{
+ "actuary.project_retirement": {
+  "client_id": "patel-001",
+  "household": "Patel household",
+  "portfolio_value": 2350000,
+  "portfolio_source": "mcp",
+  "as_of": "2026-10-01",
+  "headline": "Retire at 62: 87% probability of success, spending $140,000/yr. Retiring at 63 instead of 62 raises the probability of success from 87% to 91%.",
+  "already_retired": false,
+  "ages_are_of": "Raj Patel",
+  "scenarios": [
+   {
+    "retire_age": 62,
+    "annual_spending": 140000,
+    "probability_of_success_pct": 87.4,
+    "median_at_retirement": 2907000,
+    "balance_at_plan_end": {
+     "p10": 0,
+     "p50": 3248000,
+     "p90": 11654000
+    },
+    "worst_case_age_money_lasts": 94,
+    "median_path_by_age": {
+     "58": 2350000,
+     "63": 2854000,
+     "68": 2744000,
+     "73": 2807000,
+     "78": 2909000,
+     "83": 3021000,
+     "88": 3070000,
+     "93": 3144000
+    },
+    "expected_return_pct": 3.98,
+    "volatility_pct": 11.17,
+    "simulations": 2000,
+    "years": 39,
+    "seed": -559472303560846268
+   },
+   {
+    "retire_age": 63,
+    "annual_spending": 140000,
+    "probability_of_success_pct": 91.2,
+    "median_at_retirement": 3034000,
+    "balance_at_plan_end": {
+     "p10": 118000,
+     "p50": 3809000,
+     "p90": 13064000
+    },
+    "worst_case_age_money_lasts": 97,
+    "median_path_by_age": {
+     "58": 2350000,
+     "63": 3034000,
+     "68": 2926000,
+     "73": 3032000,
+     "78": 3231000,
+     "83": 3279000,
+     "88": 3437000,
+     "93": 3700000
+    },
+    "expected_return_pct": 3.98,
+    "volatility_pct": 11.17,
+    "simulations": 2000,
+    "years": 39,
+    "seed": 2575542215077386339
+   }
+  ],
+  "comparison": [
+   "Retiring at 63 instead of 62 raises the probability of success from 87% to 91%."
+  ],
+  "inputs": {
+   "annual_spending": 140000,
+   "annual_savings_until_retirement": 60000,
+   "social_security": [
+    {
+     "name": "Raj Patel",
+     "from_age": 67,
+     "annual": 38000.0
+    },
+    {
+     "name": "Anita Patel",
+     "from_age": 67,
+     "annual": 26000.0
+    }
+   ],
+   "one_time_withdrawals": [
+    {
+     "year": 2027,
+     "amount": 60000.0,
+     "label": "Priya's wedding"
+    }
+   ],
+   "plan_to_age": 95,
+   "simulations": 2000
+  },
+  "assumptions": {
+   "equity_mean": 0.05,
+   "equity_vol": 0.16,
+   "bond_mean": 0.02,
+   "bond_vol": 0.06,
+   "cash_mean": 0.005,
+   "cash_vol": 0.01,
+   "equity_bond_correlation": 0.1
+  },
+  "disclosure": "Hypothetical illustration based on assumed returns, in today's dollars. Not a guarantee of future results. Review with the client before acting."
+ },
+ "actuary.stress_test": {
+  "client_id": "patel-001",
+  "household": "Patel household",
+  "portfolio_value": 2350000,
+  "portfolio_source": "mcp",
+  "as_of": "2026-10-01",
+  "headline": "Worst case: 2008 global financial crisis would cost about $556,000 (23.7%), about 4.0 years of retirement spending.",
+  "scenarios": [
+   {
+    "scenario": "gfc_2008",
+    "name": "2008 global financial crisis",
+    "loss": 556000,
+    "loss_pct": 23.7,
+    "value_after": 1794000,
+    "years_of_spending": 4.0,
+    "note": "Stocks about -37% in 2008; high-quality bonds rose."
+   },
+   {
+    "scenario": "covid_2020",
+    "name": "2020 COVID crash (Feb-Mar)",
+    "loss": 537000,
+    "loss_pct": 22.8,
+    "value_after": 1813000,
+    "years_of_spending": 3.8,
+    "note": "Fast 34% stock drop in five weeks; recovered within months."
+   },
+   {
+    "scenario": "dotcom_2000",
+    "name": "2000-2002 dot-com bust",
+    "loss": 512000,
+    "loss_pct": 21.8,
+    "value_after": 1838000,
+    "years_of_spending": 3.7,
+    "note": "Stocks fell about 45% over three years; bonds rallied."
+   },
+   {
+    "scenario": "rates_2022",
+    "name": "2022 rate shock",
+    "loss": 372000,
+    "loss_pct": 15.8,
+    "value_after": 1978000,
+    "years_of_spending": 2.7,
+    "note": "Stocks AND bonds fell together: diversification helped less."
+   },
+   {
+    "scenario": "single_stock_halved",
+    "name": "XYZ falls 50% (company-specific)",
+    "loss": 165000,
+    "loss_pct": 7.0,
+    "value_after": 2186000,
+    "years_of_spending": 1.2,
+    "note": "Only XYZ falls; the rest of the market is flat."
+   }
+  ],
+  "allocation_pct": {
+   "fixed_income": 28.0,
+   "cash": 4.0,
+   "equity": 68.0
+  },
+  "disclosure": "Approximate historical index moves applied to today's mix. Illustrative only; a real portfolio would not move exactly like the indexes."
+ },
+ "herald.draft_email": {
+  "subject": "Following up on our conversation",
+  "body": "Hi Raj and Anita,\n\nThanks for meeting. Quick recap:\n\n[Add your key points]\n\nOn my side, I'm working on:\n- Update beneficiary form for Raj's IRA.\n- Model retirement at 62 and 63 and send both scenarios.\n\nOur next review is on Thursday, October 8.\n\nLet me know if you have any questions.\n\nThanks,\n[Your name]\nAurelius Wealth",
+  "to": [
+   "Raj Patel <r***@example.com>",
+   "Anita Patel <a***@example.com>"
+  ],
+  "salutation": "Raj and Anita",
+  "intent": "meeting_follow_up",
+  "tone": "brief",
+  "channel_preference": "email",
+  "personalized": true,
+  "compliance": {
+   "fixes": [],
+   "disclosure_added": false,
+   "warnings": [
+    "The email still has a [placeholder]. Fill it in."
+   ]
+  },
+  "warnings": [
+   "2 open task(s) are overdue in the CRM."
+  ],
+  "requires_approval": true,
+  "drafted_by": "template"
+ }
+}

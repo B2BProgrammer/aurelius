@@ -1,0 +1,252 @@
+###############################################################################
+#  AURELIUS LIBRARIAN (knowledge-rag) - API TEST COLLECTION
+#
+#  HOW TO USE
+#   1. VS Code extension "REST Client" (by Huachao Mao).
+#   2. Start the Librarian:  python src\main.py   (port 8001, see TESTING.md)
+#   3. Paste SERVICE_TOKEN from aurelius\.env into @serviceToken:
+#        Select-String -Path ..\..\..\.env -Pattern '^SERVICE_TOKEN='
+#   4. Click "Send Request" above any request. Compare with EXPECT.
+#
+#  ANSWER STYLE
+#   No API key  -> answered_by "extractive": quotes of the best passages + [n]
+#   With a key  -> answered_by "claude-haiku-...": a written answer + [n]
+#   Either way the CITATIONS (which document, which section) should match EXPECT.
+###############################################################################
+
+@baseUrl = http://localhost:8001
+@serviceToken = PASTE-SERVICE-TOKEN-HERE
+
+
+###############################################################################
+#  1. PUBLIC ENDPOINTS
+###############################################################################
+
+### 1.1 Health: also shows how much is indexed
+# EXPECT: 200  {"status":"ok","agent":"librarian","chunks_indexed": ~27, "embeddings":"minilm"}
+GET {{baseUrl}}/health
+
+### 1.2 Agent card with the input/output schema of search_knowledge
+# EXPECT: 200  skills.search_knowledge.input_schema.properties: query, top_k, doc_type
+GET {{baseUrl}}/.well-known/agent.json
+
+
+###############################################################################
+#  2. AUTH + WHAT'S IN THE INDEX
+###############################################################################
+
+### 2.1 No token
+# EXPECT: 401
+GET {{baseUrl}}/v1/documents
+
+### 2.2 Indexed documents and the quarantine report
+# EXPECT: 200  7 documents listed with title, doc_type, chunks.
+#              vendor-market-note.md is NOT listed: it shows under
+#              "quarantined_last_ingest" with reason "Tries to override the assistant's instructions"
+GET {{baseUrl}}/v1/documents
+Authorization: Bearer {{serviceToken}}
+
+
+###############################################################################
+#  3. search_knowledge: THE AGENT SKILL  (what the Conductor calls)
+###############################################################################
+
+### 3.1 Policy question
+# EXPECT: 200  grounded=true, citations include concentration-policy.md
+#              answer mentions the 10 percent limit
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "search_knowledge",
+  "input": { "query": "What is the firm policy on single stock concentration?" },
+  "context": { "trace_id": "lib-301", "user_id": "dev-advisor" }
+}
+
+### 3.2 Retirement rules
+# EXPECT: 200  citation rmd-guide.md, section "Who must take RMDs", answer has age 73 / 75 in 2033
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "search_knowledge",
+  "input": { "query": "When do clients have to start required minimum distributions?" },
+  "context": { "trace_id": "lib-302", "user_id": "dev-advisor" }
+}
+
+### 3.3 Tax rule
+# EXPECT: 200  citation tax-loss-harvesting.md, "30 days before or after"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "search_knowledge",
+  "input": { "query": "How does the wash sale rule work?" },
+  "context": { "trace_id": "lib-303", "user_id": "dev-advisor" }
+}
+
+### 3.4 Research
+# EXPECT: 200  citation equity-research-xyz.md, "Hold (downgraded from Buy)"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "search_knowledge",
+  "input": { "query": "What is the research rating on XYZ Corp?" },
+  "context": { "trace_id": "lib-304", "user_id": "dev-advisor" }
+}
+
+### 3.5 Product facts
+# EXPECT: 200  citation intl-bond-fund-factsheet.md, "Expense ratio: 0.45 percent"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "search_knowledge",
+  "input": { "query": "What is the expense ratio of the international bond fund?" },
+  "context": { "trace_id": "lib-305", "user_id": "dev-advisor" }
+}
+
+### 3.6 Semantic search: no shared keywords ("RMD" and "minimum distribution" aren't in the question)
+# EXPECT (minilm): citation rmd-guide.md, because the MEANING matches
+#   (with EMBEDDING_PROVIDER=hash this may miss: hash only matches words. Try both!)
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "search_knowledge",
+  "input": { "query": "At what age must retirees begin pulling money out of their traditional IRA?" },
+  "context": { "trace_id": "lib-306", "user_id": "dev-advisor" }
+}
+
+### 3.7 Filter by document type: policies only
+# EXPECT: 200  every citation is concentration-policy.md (a policy), including "2. Limits"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "search_knowledge",
+  "input": { "query": "What is the limit for a single stock position?", "doc_type": "policy", "top_k": 3 },
+  "context": { "trace_id": "lib-307", "user_id": "dev-advisor" }
+}
+
+### 3.8 Not in the documents: says so instead of guessing
+# EXPECT: 200  grounded=false, citations=[], "I couldn't find this in the firm's documents..."
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "search_knowledge",
+  "input": { "query": "Best pizza in Chicago" },
+  "context": { "trace_id": "lib-308", "user_id": "dev-advisor" }
+}
+
+### 3.9 Extra fields from the Conductor are ignored
+# EXPECT: 200  status "ok", citations from rebalancing-policy.md
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "search_knowledge",
+  "input": { "query": "How much portfolio drift before rebalancing?", "client_id": "patel-001", "prior_results": {} },
+  "context": { "trace_id": "lib-309", "user_id": "dev-advisor", "client_id": "patel-001" }
+}
+
+
+###############################################################################
+#  4. RAW RETRIEVAL: LOOK INSIDE THE "R" OF RAG  (no LLM, just vectors)
+###############################################################################
+
+### 4.1 See passages and similarity scores
+# EXPECT: 200  results sorted by score, each with passes_cutoff true/false.
+#              Top result: rebalancing-policy.md > "When to rebalance"
+POST {{baseUrl}}/v1/search
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "query": "When should I rebalance a portfolio?", "top_k": 5 }
+
+### 4.2 Unrelated question: low scores, none pass the cutoff
+# EXPECT: 200  every result has passes_cutoff=false
+POST {{baseUrl}}/v1/search
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "query": "Best pizza in Chicago", "top_k": 3 }
+
+
+###############################################################################
+#  5. SECURITY: POISONED DOCUMENT (indirect prompt injection)
+###############################################################################
+
+### 5.1 Ask about the vendor note's topic
+# EXPECT: 200  answer does NOT contain "guaranteed winner" or "move all their savings":
+#              that passage was quarantined and never indexed
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "search_knowledge",
+  "input": { "query": "What does the vendor market commentary say about XYZ Corp?" },
+  "context": { "trace_id": "lib-501", "user_id": "dev-advisor" }
+}
+
+### 5.2 Rebuild the index (after adding/editing files in rag\data\sample-docs)
+# EXPECT: 200  {"documents":8,"chunks":~27,"quarantined":[{vendor-market-note.md...}]}
+POST {{baseUrl}}/v1/ingest
+Authorization: Bearer {{serviceToken}}
+
+
+###############################################################################
+#  6. BAD REQUESTS  (errors in the standard envelope)
+###############################################################################
+
+### 6.1 Missing query
+# EXPECT: 200  status "error", "invalid input: query Field required"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "search_knowledge", "input": {}, "context": { "trace_id": "lib-601", "user_id": "dev-advisor" } }
+
+### 6.2 top_k too large
+# EXPECT: 200  status "error", "invalid input: top_k ..."
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "search_knowledge", "input": { "query": "x", "top_k": 50 }, "context": { "trace_id": "lib-602", "user_id": "dev-advisor" } }
+
+### 6.3 Unknown doc_type
+# EXPECT: 200  status "error", "invalid input: doc_type ..."
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "search_knowledge", "input": { "query": "x", "doc_type": "gossip" }, "context": { "trace_id": "lib-603", "user_id": "dev-advisor" } }
+
+### 6.4 Unknown skill
+# EXPECT: 200  status "error", "unknown skill delete_index"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "delete_index", "input": {}, "context": { "trace_id": "lib-604", "user_id": "dev-advisor" } }
+
+### 6.5 Missing context (breaks the agent contract)
+# EXPECT: 422
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "search_knowledge", "input": { "query": "x" } }

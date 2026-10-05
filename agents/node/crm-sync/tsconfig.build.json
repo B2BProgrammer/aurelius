@@ -1,0 +1,13 @@
+{
+  // Production build: compile src/*.ts -> dist/*.js (run with "npm run build").
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "dist",
+    "sourceMap": true,       // stack traces point at the .ts lines
+    "declaration": false,
+    "removeComments": false
+  },
+  "include": ["src"]
+}

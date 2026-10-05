@@ -1,0 +1,14 @@
+{
+  "XYZ":  { "name": "XYZ Corp (fictional)", "security_type": "stock", "asset_class": "equity", "description": "Large-cap technology company. Research rating: Hold." },
+  "ABC":  { "name": "ABC Industries (fictional)", "security_type": "stock", "asset_class": "equity", "description": "Industrial manufacturer; client's former employer." },
+  "USTM": { "name": "US Total Market Index Fund", "security_type": "fund", "asset_class": "equity", "description": "Broad US equity index fund.", "replacements": ["USLC"] },
+  "USLC": { "name": "US Large Cap Index Fund", "security_type": "fund", "asset_class": "equity", "description": "US large-cap index fund from a different index provider." },
+  "INTL": { "name": "International Developed Equity Index Fund", "security_type": "fund", "asset_class": "equity", "description": "Developed markets outside the US.", "replacements": ["INTX"] },
+  "INTX": { "name": "International Equity ex-US Fund", "security_type": "fund", "asset_class": "equity", "description": "Different provider, similar exposure." },
+  "EMKT": { "name": "Emerging Markets Equity Fund", "security_type": "fund", "asset_class": "equity", "description": "Emerging-market stocks.", "replacements": ["EMKX"] },
+  "EMKX": { "name": "Emerging Markets Index Fund (alt. provider)", "security_type": "fund", "asset_class": "equity", "description": "Similar exposure, different index." },
+  "AIBF": { "name": "Aurelius International Bond Fund (fictional)", "security_type": "fund", "asset_class": "fixed_income", "description": "Hedged international investment-grade bonds.", "replacements": ["GIBX"] },
+  "GIBX": { "name": "Global Bond Index Fund ex-US (alt. provider)", "security_type": "fund", "asset_class": "fixed_income", "description": "Similar exposure, different provider." },
+  "AGGB": { "name": "US Aggregate Bond Index Fund", "security_type": "fund", "asset_class": "fixed_income", "description": "Investment-grade US bonds." },
+  "MMKT": { "name": "Government Money Market Fund", "security_type": "cash", "asset_class": "cash", "description": "Cash equivalent." }
+}

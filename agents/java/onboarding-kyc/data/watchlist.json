@@ -1,0 +1,15 @@
+{
+  "_note": "DEMO watchlist. Every entry is FICTIONAL. Real firms screen against official sanctions lists (e.g. OFAC SDN) through a licensed vendor.",
+  "entries": [
+    { "list_id": "DEMO-0001", "name": "Viktor Aleksandr Morozenko", "aliases": ["Victor Morozenko", "V. A. Morozenko"],
+      "dob": "1961-07-19", "country": "XX", "program": "DEMO-SANCTIONS" },
+    { "list_id": "DEMO-0002", "name": "Carlos Ernesto Villanueva Ruiz", "aliases": ["Carlos Villanueva"],
+      "dob": "1972-03-03", "country": "XY", "program": "DEMO-NARCOTICS" },
+    { "list_id": "DEMO-0003", "name": "Amira Hassan Qadir", "aliases": ["Amira Kadir"],
+      "dob": "1985-11-30", "country": "XZ", "program": "DEMO-TERRORISM" },
+    { "list_id": "DEMO-0004", "name": "Lucas Garcia Montoya", "aliases": ["Luis Garcia Montoya"],
+      "dob": "1966-01-12", "country": "XY", "program": "DEMO-FRAUD" },
+    { "list_id": "DEMO-0005", "name": "Oleg Dmitrievich Stravinov", "aliases": [],
+      "dob": "1958-09-09", "country": "XX", "program": "DEMO-SANCTIONS" }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "_note": "Fallback copy of the MCP server's portfolios (as of 2026-10-01). Used ONLY when the MCP server can't be reached; the answer then says so.",
+  "clients": {
+    "patel-001": {
+      "as_of": "2026-10-01", "risk_profile": "moderate",
+      "target_allocation_pct": { "equity": 60, "fixed_income": 35, "cash": 5 },
+      "total_market_value": 2350000.0,
+      "allocation_value": { "equity": 1598000.0, "fixed_income": 658000.0, "cash": 94000.0 },
+      "largest_single_stock": { "symbol": "XYZ", "market_value": 329000.0 }
+    },
+    "chen-002": {
+      "as_of": "2026-10-01", "risk_profile": "conservative",
+      "target_allocation_pct": { "equity": 40, "fixed_income": 55, "cash": 5 },
+      "total_market_value": 900000.25,
+      "allocation_value": { "equity": 360000.25, "fixed_income": 495000.0, "cash": 45000.0 }
+    },
+    "garcia-003": {
+      "as_of": "2026-10-01", "risk_profile": "aggressive",
+      "target_allocation_pct": { "equity": 80, "fixed_income": 15, "cash": 5 },
+      "total_market_value": 1000000.0,
+      "allocation_value": { "equity": 700000.0, "fixed_income": 150000.0, "cash": 150000.0 },
+      "largest_single_stock": { "symbol": "ABC", "market_value": 220000.0 }
+    }
+  }
+}

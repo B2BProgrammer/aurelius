@@ -1,0 +1,38 @@
+# Actuary settings.
+# ${NAME:default} = read NAME from: real environment variables, then risk-engine\.env,
+# then aurelius\.env (loaded by ActuaryApplication.main), else use the default.
+
+server:
+  port: ${ACTUARY_PORT:8202}
+  address: ${ACTUARY_HOST:127.0.0.1}
+  error:
+    include-stacktrace: never
+
+spring:
+  application:
+    name: actuary
+  main:
+    banner-mode: off
+
+actuary:
+  service-token: ${SERVICE_TOKEN:}
+  profiles-file: ${ACTUARY_PROFILES_FILE:data/profiles.json}           # planning profiles (fictional)
+  snapshot-file: ${ACTUARY_SNAPSHOT_FILE:data/portfolio-snapshot.json} # used only if the MCP server is down
+  mcp-url: ${MCP_ADVISOR_TOOLS_URL:http://127.0.0.1:8500/mcp}          # same setting as the Analyst
+  mcp-timeout-ms: ${ACTUARY_MCP_TIMEOUT_MS:5000}
+  default-simulations: ${ACTUARY_DEFAULT_SIMULATIONS:5000}
+  max-simulations: ${ACTUARY_MAX_SIMULATIONS:20000}
+
+springdoc:
+  api-docs:
+    path: /openapi.json
+  swagger-ui:
+    path: /docs
+    persist-authorization: true
+    display-request-duration: true
+    tags-sorter: alpha
+
+logging:
+  structured:
+    format:
+      console: ecs

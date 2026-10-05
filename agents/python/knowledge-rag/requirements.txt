@@ -1,0 +1,12 @@
+# Librarian (knowledge-rag) dependencies
+fastapi>=0.115          # web framework
+uvicorn[standard]>=0.30 # server
+pydantic>=2.7           # validation
+pydantic-settings>=2.3  # settings from .env
+anthropic>=0.40         # Claude writes the grounded answer
+chromadb>=1.0           # vector database, runs embedded (no server to install)
+                        # also brings onnxruntime + the all-MiniLM-L6-v2 embedding model
+
+# testing
+pytest>=8
+httpx>=0.27

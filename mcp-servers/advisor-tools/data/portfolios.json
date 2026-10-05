@@ -1,0 +1,261 @@
+{
+  "as_of": "2026-10-01",
+  "note": "Fictional sample data for the Aurelius learning project.",
+  "clients": {
+    "patel-001": {
+      "household": "Patel household",
+      "risk_profile": "moderate",
+      "target_allocation": {
+        "equity": 60,
+        "fixed_income": 35,
+        "cash": 5
+      },
+      "accounts": [
+        {
+          "account_id": "PAT-JOINT",
+          "type": "taxable",
+          "owner": "Raj & Anita Patel"
+        },
+        {
+          "account_id": "PAT-RAJ-IRA",
+          "type": "ira",
+          "owner": "Raj Patel"
+        },
+        {
+          "account_id": "PAT-ANITA-ROLL",
+          "type": "ira",
+          "owner": "Anita Patel"
+        }
+      ],
+      "positions": [
+        {
+          "account_id": "PAT-JOINT",
+          "symbol": "XYZ",
+          "quantity": 2350,
+          "price": 140.0,
+          "cost_basis": 140000,
+          "acquired": "2015-06-12"
+        },
+        {
+          "account_id": "PAT-JOINT",
+          "symbol": "USTM",
+          "quantity": 1600,
+          "price": 250.0,
+          "cost_basis": 300000,
+          "acquired": "2018-02-01"
+        },
+        {
+          "account_id": "PAT-JOINT",
+          "symbol": "AIBF",
+          "quantity": 18800,
+          "price": 10.0,
+          "cost_basis": 200000,
+          "acquired": "2025-03-10"
+        },
+        {
+          "account_id": "PAT-JOINT",
+          "symbol": "MMKT",
+          "quantity": 50000,
+          "price": 1.0,
+          "cost_basis": 50000,
+          "acquired": "2026-01-02"
+        },
+        {
+          "account_id": "PAT-RAJ-IRA",
+          "symbol": "INTL",
+          "quantity": 4000,
+          "price": 75.0,
+          "cost_basis": 250000,
+          "acquired": "2017-09-15"
+        },
+        {
+          "account_id": "PAT-RAJ-IRA",
+          "symbol": "AGGB",
+          "quantity": 3200,
+          "price": 100.0,
+          "cost_basis": 330000,
+          "acquired": "2019-04-20"
+        },
+        {
+          "account_id": "PAT-RAJ-IRA",
+          "symbol": "MMKT",
+          "quantity": 44000,
+          "price": 1.0,
+          "cost_basis": 44000,
+          "acquired": "2026-03-01"
+        },
+        {
+          "account_id": "PAT-ANITA-ROLL",
+          "symbol": "USTM",
+          "quantity": 2276,
+          "price": 250.0,
+          "cost_basis": 400000,
+          "acquired": "2020-11-05"
+        },
+        {
+          "account_id": "PAT-ANITA-ROLL",
+          "symbol": "AGGB",
+          "quantity": 1500,
+          "price": 100.0,
+          "cost_basis": 155000,
+          "acquired": "2020-11-05"
+        }
+      ],
+      "trades": [
+        {
+          "date": "2026-09-20",
+          "account_id": "PAT-ANITA-ROLL",
+          "symbol": "USTM",
+          "side": "buy",
+          "quantity": 40,
+          "amount": 10000
+        }
+      ]
+    },
+    "chen-002": {
+      "household": "Chen family",
+      "risk_profile": "conservative",
+      "target_allocation": {
+        "equity": 40,
+        "fixed_income": 55,
+        "cash": 5
+      },
+      "accounts": [
+        {
+          "account_id": "CHN-JOINT",
+          "type": "taxable",
+          "owner": "Wei & Lin Chen"
+        },
+        {
+          "account_id": "CHN-WEI-IRA",
+          "type": "ira",
+          "owner": "Wei Chen"
+        }
+      ],
+      "positions": [
+        {
+          "account_id": "CHN-JOINT",
+          "symbol": "USTM",
+          "quantity": 880,
+          "price": 250.0,
+          "cost_basis": 180000,
+          "acquired": "2019-05-01"
+        },
+        {
+          "account_id": "CHN-JOINT",
+          "symbol": "AGGB",
+          "quantity": 2450,
+          "price": 100.0,
+          "cost_basis": 240000,
+          "acquired": "2019-05-01"
+        },
+        {
+          "account_id": "CHN-JOINT",
+          "symbol": "MMKT",
+          "quantity": 45000,
+          "price": 1.0,
+          "cost_basis": 45000,
+          "acquired": "2026-01-02"
+        },
+        {
+          "account_id": "CHN-WEI-IRA",
+          "symbol": "INTL",
+          "quantity": 1866.67,
+          "price": 75.0,
+          "cost_basis": 120000,
+          "acquired": "2021-08-10"
+        },
+        {
+          "account_id": "CHN-WEI-IRA",
+          "symbol": "AGGB",
+          "quantity": 2500,
+          "price": 100.0,
+          "cost_basis": 255000,
+          "acquired": "2021-08-10"
+        }
+      ],
+      "trades": []
+    },
+    "garcia-003": {
+      "household": "Garcia household",
+      "risk_profile": "aggressive",
+      "target_allocation": {
+        "equity": 80,
+        "fixed_income": 15,
+        "cash": 5
+      },
+      "accounts": [
+        {
+          "account_id": "GAR-JOINT",
+          "type": "taxable",
+          "owner": "Maria & Luis Garcia"
+        },
+        {
+          "account_id": "GAR-MARIA-IRA",
+          "type": "ira",
+          "owner": "Maria Garcia"
+        }
+      ],
+      "positions": [
+        {
+          "account_id": "GAR-JOINT",
+          "symbol": "ABC",
+          "quantity": 2000,
+          "price": 110.0,
+          "cost_basis": 60000,
+          "acquired": "2012-03-01"
+        },
+        {
+          "account_id": "GAR-JOINT",
+          "symbol": "EMKT",
+          "quantity": 1500,
+          "price": 30.0,
+          "cost_basis": 60000,
+          "acquired": "2024-11-15"
+        },
+        {
+          "account_id": "GAR-JOINT",
+          "symbol": "MMKT",
+          "quantity": 150000,
+          "price": 1.0,
+          "cost_basis": 150000,
+          "acquired": "2026-06-30"
+        },
+        {
+          "account_id": "GAR-MARIA-IRA",
+          "symbol": "USTM",
+          "quantity": 1200,
+          "price": 250.0,
+          "cost_basis": 210000,
+          "acquired": "2016-01-20"
+        },
+        {
+          "account_id": "GAR-MARIA-IRA",
+          "symbol": "INTL",
+          "quantity": 1800,
+          "price": 75.0,
+          "cost_basis": 120000,
+          "acquired": "2016-01-20"
+        },
+        {
+          "account_id": "GAR-MARIA-IRA",
+          "symbol": "AGGB",
+          "quantity": 1500,
+          "price": 100.0,
+          "cost_basis": 152000,
+          "acquired": "2016-01-20"
+        }
+      ],
+      "trades": [
+        {
+          "date": "2026-09-19",
+          "account_id": "GAR-MARIA-IRA",
+          "symbol": "EMKT",
+          "side": "buy",
+          "quantity": 100,
+          "amount": 3000
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,250 @@
+###############################################################################
+#  AURELIUS ACTUARY (risk-engine, Java / Spring Boot) - API TEST COLLECTION
+#
+#  1. Start the MCP server (Terminal 1, mcp-servers\advisor-tools):  python src\main.py   (port 8500)
+#     (optional: without it the Actuary uses data\portfolio-snapshot.json and says so)
+#  2. Start the Actuary (Terminal 2, risk-engine):  mvn spring-boot:run   (port 8202)
+#     Swagger UI: http://localhost:8202/docs
+#  3. Paste SERVICE_TOKEN from aurelius\.env:
+#       Select-String -Path ..\..\..\.env -Pattern '^SERVICE_TOKEN='
+#  4. Click "Send Request". Compare with EXPECT.
+#  The Actuary only reads and computes: run these in any order, as often as you like.
+###############################################################################
+
+@baseUrl = http://localhost:8202
+@serviceToken = PASTE-SERVICE-TOKEN-HERE
+
+
+###############################################################################
+#  1. PUBLIC
+###############################################################################
+
+### 1.1 Health
+# EXPECT: 200  {"status":"ok","agent":"actuary","clients":3,"mcp_url":"http://127.0.0.1:8500/mcp"}
+GET {{baseUrl}}/health
+
+### 1.2 Agent card: 3 skills with JSON schemas, depends_on the MCP server
+GET {{baseUrl}}/.well-known/agent.json
+
+### 1.3 OpenAPI document
+GET {{baseUrl}}/openapi.json
+
+
+###############################################################################
+#  2. RISK_SCORE
+###############################################################################
+
+### 2.1 Patel
+# EXPECT: risk_score 60, band "Moderate growth", limiting_factor "willingness", alignment "aligned",
+#         portfolio_source "mcp" (or "snapshot (MCP unavailable: ...)"), note: XYZ is 14% of the portfolio
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "risk_score", "input": { "client_id": "patel-001" },
+  "context": { "trace_id": "http-2-1", "user_id": "dev-advisor" } }
+
+### 2.2 Garcia: portfolio riskier than their profile
+# EXPECT: band "Moderate", alignment "portfolio_riskier_than_profile",
+#         notes: 70% vs ~55% equity; target on file 80% "aggressive" differs; ABC is 22%
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "risk_score", "input": { "client_id": "garcia-003" },
+  "context": { "trace_id": "http-2-2", "user_id": "dev-advisor" } }
+
+### 2.3 Chen (retired)
+# EXPECT: band "Moderately conservative", alignment "aligned" (40% equity)
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "risk_score", "input": { "client_id": "chen-002" },
+  "context": { "trace_id": "http-2-3", "user_id": "dev-advisor" } }
+
+
+###############################################################################
+#  3. PROJECT_RETIREMENT (Monte Carlo)
+###############################################################################
+
+### 3.1 Raj's question from the July meeting: retire at 62 or 63?
+# EXPECT: two scenarios; ~87% at 62, ~91% at 63 (exact numbers depend on the data, but are the SAME every time);
+#         comparison "Retiring at 63 instead of 62 raises the probability of success from ..% to ..%."
+#         ages_are_of "Raj Patel", disclosure "... Not a guarantee ..."
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "project_retirement", "input": { "client_id": "patel-001", "retire_ages": [62, 63] },
+  "context": { "trace_id": "http-3-1", "user_id": "dev-advisor" } }
+
+### 3.2 SEND 3.1 AGAIN: identical numbers (seeded, reproducible)
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "project_retirement", "input": { "client_id": "patel-001", "retire_ages": [62, 63] },
+  "context": { "trace_id": "http-3-2", "user_id": "dev-advisor" } }
+
+### 3.3 What if they spend $125k instead of $140k?
+# EXPECT: higher probability than 3.1 at 62
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "project_retirement", "input": { "client_id": "patel-001", "retire_ages": [62], "annual_spending": 125000 },
+  "context": { "trace_id": "http-3-3", "user_id": "dev-advisor" } }
+
+### 3.4 What if they save $20k more per year until then?
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "project_retirement", "input": { "client_id": "patel-001", "extra_annual_savings": 20000 },
+  "context": { "trace_id": "http-3-4", "user_id": "dev-advisor" } }
+
+### 3.5 Chen: already retired -> one scenario, no retirement ages
+# EXPECT: already_retired true, headline "Already retired: over 99% probability the money lasts to age 95 ..."
+#         (never "100%": a projection must not sound like a certainty)
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "project_retirement", "input": { "client_id": "chen-002" },
+  "context": { "trace_id": "http-3-5", "user_id": "dev-advisor" } }
+
+### 3.6 Garcia: Diego's college (4 x $35k) is in the plan
+# EXPECT: inputs.one_time_withdrawals lists the 4 college years
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "project_retirement", "input": { "client_id": "garcia-003", "retire_ages": [65, 67] },
+  "context": { "trace_id": "http-3-6", "user_id": "dev-advisor" } }
+
+
+###############################################################################
+#  4. STRESS_TEST
+###############################################################################
+
+### 4.1 Patel: all scenarios, worst first
+# EXPECT: headline "Worst case: 2008 global financial crisis would cost about $556,000 (23.7%), about 4.0 years ..."
+#         plus "XYZ falls 50% (company-specific)"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "stress_test", "input": { "client_id": "patel-001" },
+  "context": { "trace_id": "http-4-1", "user_id": "dev-advisor" } }
+
+### 4.2 Chen: 2022 (stocks AND bonds fell) hurts a bond-heavy mix most
+# EXPECT: worst case "2022 rate shock"; no single-stock row (Chen holds none)
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "stress_test", "input": { "client_id": "chen-002" },
+  "context": { "trace_id": "http-4-2", "user_id": "dev-advisor" } }
+
+### 4.3 One scenario only
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "stress_test", "input": { "client_id": "garcia-003", "scenario": "single_stock_halved" },
+  "context": { "trace_id": "http-4-3", "user_id": "dev-advisor" } }
+
+
+###############################################################################
+#  5. BROWSE
+###############################################################################
+
+### 5.1 Households with planning profiles
+GET {{baseUrl}}/v1/clients
+Authorization: Bearer {{serviceToken}}
+
+### 5.2 The assumptions behind every number (returns, volatility, bands, scenarios)
+GET {{baseUrl}}/v1/assumptions
+Authorization: Bearer {{serviceToken}}
+
+
+###############################################################################
+#  6. ERRORS & SECURITY
+###############################################################################
+
+### 6.1 No token
+# EXPECT: 401
+POST {{baseUrl}}/invoke
+Content-Type: application/json
+
+{ "skill": "risk_score", "input": { "client_id": "patel-001" }, "context": { "trace_id": "t", "user_id": "u" } }
+
+### 6.2 Unknown client
+# EXPECT: status "error", "No planning profile for client 'nobody-1'"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "risk_score", "input": { "client_id": "nobody-1" }, "context": { "trace_id": "http-6-2", "user_id": "dev-advisor" } }
+
+### 6.3 Retirement age already passed
+# EXPECT: status "error", "retire_ages must be after Raj Patel's current age (58)"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "project_retirement", "input": { "client_id": "patel-001", "retire_ages": [57] },
+  "context": { "trace_id": "http-6-3", "user_id": "dev-advisor" } }
+
+### 6.4 Retirement ages for a retired household
+# EXPECT: status "error", "Wei Chen is already retired (age 72): leave retire_ages out, ..."
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "project_retirement", "input": { "client_id": "chen-002", "retire_ages": [75] },
+  "context": { "trace_id": "http-6-4", "user_id": "dev-advisor" } }
+
+### 6.5 Too many simulations (protects the CPU)
+# EXPECT: status "error", "simulations must be at most 20000"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "project_retirement", "input": { "client_id": "patel-001", "simulations": 5000000 },
+  "context": { "trace_id": "http-6-5", "user_id": "dev-advisor" } }
+
+### 6.6 Wrong type
+# EXPECT: status "error", "invalid input: retire_ages has the wrong type"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "project_retirement", "input": { "client_id": "patel-001", "retire_ages": ["sixty-two"] },
+  "context": { "trace_id": "http-6-6", "user_id": "dev-advisor" } }
+
+### 6.7 Unknown stress scenario
+# EXPECT: status "error", "scenario must be one of [gfc_2008, dotcom_2000, covid_2020, rates_2022, single_stock_halved]"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "stress_test", "input": { "client_id": "patel-001", "scenario": "zombies" },
+  "context": { "trace_id": "http-6-7", "user_id": "dev-advisor" } }
+
+### 6.8 Missing context
+# EXPECT: 422  {"detail":"invalid request: context is required"}
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "risk_score", "input": { "client_id": "patel-001" } }
+
+### 6.9 Unknown skill (the Actuary can't trade)
+# EXPECT: status "error", "unknown skill buy_stock"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "buy_stock", "input": {}, "context": { "trace_id": "http-6-9", "user_id": "dev-advisor" } }

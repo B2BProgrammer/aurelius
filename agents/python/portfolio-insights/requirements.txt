@@ -1,0 +1,11 @@
+# Analyst (portfolio-insights) dependencies
+fastapi>=0.115          # web framework
+uvicorn[standard]>=0.30 # server
+pydantic>=2.7           # validation
+pydantic-settings>=2.3  # settings from .env
+anthropic>=0.40         # Claude: narrative summary + MCP tool-use Q&A (optional)
+mcp>=2.3,<3             # MCP client: talks to the advisor-tools MCP server
+
+# testing
+pytest>=8
+httpx>=0.27

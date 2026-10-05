@@ -1,0 +1,73 @@
+{
+  "_note": "FICTIONAL planning profiles for the Aurelius learning project. All amounts are in today's dollars (real, after inflation).",
+  "clients": {
+    "patel-001": {
+      "household": "Patel household",
+      "members": [
+        { "name": "Raj Patel", "role": "primary", "age": 58, "retirement_age": 62,
+          "social_security_annual": 38000, "social_security_age": 67 },
+        { "name": "Anita Patel", "role": "spouse", "age": 56, "retirement_age": 62,
+          "social_security_annual": 26000, "social_security_age": 67 }
+      ],
+      "annual_savings": 60000,
+      "retirement_spending": 140000,
+      "plan_to_age": 95,
+      "one_time_withdrawals": [
+        { "year": 2027, "amount": 60000, "label": "Priya's wedding" }
+      ],
+      "questionnaire": {
+        "loss_reaction": 3,
+        "investment_experience": 4,
+        "income_stability": 4,
+        "liquidity_need": 3,
+        "primary_goal": 3
+      }
+    },
+    "chen-002": {
+      "household": "Chen family",
+      "members": [
+        { "name": "Wei Chen", "role": "primary", "age": 72, "retirement_age": 65,
+          "social_security_annual": 31000, "social_security_age": 67 },
+        { "name": "Lin Chen", "role": "spouse", "age": 70, "retirement_age": 65,
+          "social_security_annual": 19000, "social_security_age": 67 }
+      ],
+      "annual_savings": 0,
+      "retirement_spending": 78000,
+      "plan_to_age": 95,
+      "one_time_withdrawals": [],
+      "questionnaire": {
+        "loss_reaction": 2,
+        "investment_experience": 3,
+        "income_stability": 4,
+        "liquidity_need": 2,
+        "primary_goal": 1
+      }
+    },
+    "garcia-003": {
+      "household": "Garcia household",
+      "members": [
+        { "name": "Maria Garcia", "role": "primary", "age": 49, "retirement_age": 65,
+          "social_security_annual": 32000, "social_security_age": 67 },
+        { "name": "Luis Garcia", "role": "spouse", "age": 52, "retirement_age": 65,
+          "social_security_annual": 24000, "social_security_age": 67 },
+        { "name": "Diego Garcia", "role": "dependent", "age": 17 }
+      ],
+      "annual_savings": 45000,
+      "retirement_spending": 115000,
+      "plan_to_age": 95,
+      "one_time_withdrawals": [
+        { "year": 2027, "amount": 35000, "label": "Diego college, year 1" },
+        { "year": 2028, "amount": 35000, "label": "Diego college, year 2" },
+        { "year": 2029, "amount": 35000, "label": "Diego college, year 3" },
+        { "year": 2030, "amount": 35000, "label": "Diego college, year 4" }
+      ],
+      "questionnaire": {
+        "loss_reaction": 4,
+        "investment_experience": 3,
+        "income_stability": 3,
+        "liquidity_need": 2,
+        "primary_goal": 4
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+# Conductor (orchestrator) dependencies
+fastapi>=0.115          # web framework: our HTTP endpoints
+uvicorn[standard]>=0.30 # ASGI server that runs FastAPI
+pydantic>=2.7           # data validation: the agent "contract" models
+pydantic-settings>=2.3  # reads settings from .env / environment variables
+httpx>=0.27             # async HTTP client: Conductor -> other agents
+anthropic>=0.40         # official Claude SDK
+PyJWT>=2.9              # verifies the advisor's login token (JWT)
+
+# testing
+pytest>=8

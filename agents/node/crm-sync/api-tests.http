@@ -1,0 +1,211 @@
+###############################################################################
+#  AURELIUS LIAISON (crm-sync, Node.js) - API TEST COLLECTION
+#
+#  1. Start:  npm start   (port 8102)   Swagger UI: http://localhost:8102/docs
+#  2. Paste SERVICE_TOKEN from aurelius\.env:
+#       Select-String -Path ..\..\..\.env -Pattern '^SERVICE_TOKEN='
+#  3. Click "Send Request". Compare with EXPECT.
+#  Writes change data\crm.json. Start over any time: stop the server, npm run reset-data
+###############################################################################
+
+@baseUrl = http://localhost:8102
+@serviceToken = PASTE-SERVICE-TOKEN-HERE
+
+
+###############################################################################
+#  1. PUBLIC
+###############################################################################
+
+### 1.1 Health
+# EXPECT: 200  {"status":"ok","agent":"liaison","households":3}
+GET {{baseUrl}}/health
+
+### 1.2 Agent card: 5 skills, each with "writes" and a JSON schema generated from Zod
+# EXPECT: 200
+GET {{baseUrl}}/.well-known/agent.json
+
+### 1.3 The OpenAPI 3.1 document behind the Swagger page (open /docs in a browser to see it rendered)
+# EXPECT: 200  {"openapi":"3.1.0", ... paths: /health, /invoke, /v1/households ...}
+GET {{baseUrl}}/openapi.json
+
+
+###############################################################################
+#  2. AUTH + BROWSE
+###############################################################################
+
+### 2.1 No token
+# EXPECT: 401
+GET {{baseUrl}}/v1/households
+
+### 2.2 All households
+# EXPECT: 200  patel-001, chen-002, garcia-003
+GET {{baseUrl}}/v1/households
+Authorization: Bearer {{serviceToken}}
+
+### 2.3 One household (REST style)
+# EXPECT: 200  Garcia: 3 members (Diego has no contact info), service_alerts about the late report
+GET {{baseUrl}}/v1/households/garcia-003
+Authorization: Bearer {{serviceToken}}
+
+
+###############################################################################
+#  3. READ SKILLS
+###############################################################################
+
+### 3.1 get_household: what the Conductor (and later the Herald) receives
+# EXPECT: 200  members with MASKED contacts ("r***@example.com", "***-***-0101"),
+#   preferences.salutation "Raj and Anita", overdue_tasks >= 1, recent_notes (newest first)
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "get_household",
+  "input": { "client_id": "patel-001" },
+  "context": { "trace_id": "li-301", "user_id": "dev-advisor" }
+}
+
+### 3.2 client_id from context (how the Conductor may send it)
+# EXPECT: 200  Chen family, preferences.contact_channel "phone"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "get_household",
+  "input": {},
+  "context": { "trace_id": "li-302", "user_id": "dev-advisor", "client_id": "chen-002" }
+}
+
+### 3.3 list_tasks: all, with overdue flags
+# EXPECT: 200  3 Patel tasks; T-1003 status "done"; open ones past due have overdue=true
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "list_tasks",
+  "input": { "client_id": "patel-001", "status": "all" },
+  "context": { "trace_id": "li-303", "user_id": "dev-advisor" }
+}
+
+
+###############################################################################
+#  4. WRITE SKILLS  (watch data\crm.json and logs\audit.jsonl change)
+###############################################################################
+
+### 4.1 log_note, with an SSN that must NOT be stored
+# EXPECT: 200  saved true, note_id "N-51xx", pii_masked ["SSN"], duplicate false
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "log_note",
+  "input": { "client_id": "patel-001", "type": "call",
+             "note": "Call with Anita: wedding budget confirmed at 60k. Raj read out his SSN 123-45-6789 for the beneficiary form." },
+  "context": { "trace_id": "li-401", "user_id": "dev-advisor" }
+}
+
+### 4.2 SEND 4.1 AGAIN (same trace_id): a retry must not duplicate
+# EXPECT: 200  SAME note_id as 4.1, duplicate true. Only ONE note in crm.json
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "log_note",
+  "input": { "client_id": "patel-001", "type": "call",
+             "note": "Call with Anita: wedding budget confirmed at 60k. Raj read out his SSN 123-45-6789 for the beneficiary form." },
+  "context": { "trace_id": "li-401", "user_id": "dev-advisor" }
+}
+
+### 4.3 add_task with an explicit idempotency_key (send it twice: same task_id)
+# EXPECT: 200  task T-11xx, owner advisor, due 2026-10-15; second send: duplicate true
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "add_task",
+  "input": { "client_id": "patel-001", "title": "Send wedding savings options", "due": "2026-10-15",
+             "idempotency_key": "patel-wedding-options-001" },
+  "context": { "trace_id": "li-403", "user_id": "dev-advisor" }
+}
+
+### 4.4 complete_task (send twice: second says already_done true)
+# EXPECT: 200  saved true, task.status "done"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "complete_task",
+  "input": { "client_id": "patel-001", "task_id": "T-1002" },
+  "context": { "trace_id": "li-404", "user_id": "dev-advisor" }
+}
+
+### 4.5 Check the result: Patel's household now
+# EXPECT: 200  T-1002 no longer in open_tasks, new task present, newest note is the masked call note
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{
+  "skill": "get_household",
+  "input": { "client_id": "patel-001" },
+  "context": { "trace_id": "li-405", "user_id": "dev-advisor" }
+}
+
+
+###############################################################################
+#  5. ERRORS
+###############################################################################
+
+### 5.1 Unknown household
+# EXPECT: 200  status "error", "No household with id 'nobody-1'"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "get_household", "input": { "client_id": "nobody-1" }, "context": { "trace_id": "li-501", "user_id": "dev-advisor" } }
+
+### 5.2 Bad date
+# EXPECT: 200  status "error", "invalid input: due must be YYYY-MM-DD"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "add_task", "input": { "client_id": "patel-001", "title": "Valid title", "due": "next week" }, "context": { "trace_id": "li-502", "user_id": "dev-advisor" } }
+
+### 5.3 Unknown task
+# EXPECT: 200  status "error", "No task 'T-9999' for 'patel-001'"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "complete_task", "input": { "client_id": "patel-001", "task_id": "T-9999" }, "context": { "trace_id": "li-503", "user_id": "dev-advisor" } }
+
+### 5.4 There is no delete (by design)
+# EXPECT: 200  status "error", "unknown skill delete_household"
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "delete_household", "input": { "client_id": "patel-001" }, "context": { "trace_id": "li-504", "user_id": "dev-advisor" } }
+
+### 5.5 Missing context
+# EXPECT: 422
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{ "skill": "get_household", "input": { "client_id": "patel-001" } }
+
+### 5.6 Not JSON
+# EXPECT: 422  {"detail":"Body is not valid JSON"}
+POST {{baseUrl}}/invoke
+Authorization: Bearer {{serviceToken}}
+Content-Type: application/json
+
+{this is not json

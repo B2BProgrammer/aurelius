@@ -1,0 +1,9 @@
+target/
+logs/
+data/kyc.json
+data/*.tmp
+.env
+.idea/
+*.iml
+.vscode/
+.m2/

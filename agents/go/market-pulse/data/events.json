@@ -1,0 +1,53 @@
+{
+  "_note": "FICTIONAL market and news events for the Aurelius learning project. Not real companies, not real news.",
+  "events": [
+    {
+      "event_id": "EV-1001", "date": "2026-09-30", "type": "earnings", "severity": "high",
+      "headline": "XYZ Corp misses Q3 estimates; shares fall 9% on the week",
+      "summary": "Revenue grew 4% against 7% expected; management cut full-year guidance citing weaker enterprise spending.",
+      "source": "Aurelius Research Desk (demo)", "symbols": ["XYZ"], "price_change_pct": -9.0
+    },
+    {
+      "event_id": "EV-1002", "date": "2026-10-01", "type": "rating_change", "severity": "medium",
+      "headline": "Firm research keeps XYZ at Hold and trims its price target",
+      "summary": "Analysts see slower growth for two quarters; the house view repeats that single stocks should stay under 10% of a portfolio.",
+      "source": "Aurelius Research Desk (demo)", "symbols": ["XYZ"]
+    },
+    {
+      "event_id": "EV-1003", "date": "2026-09-24", "type": "rates", "severity": "medium",
+      "headline": "Central bank holds rates steady, signals one more cut this year",
+      "summary": "Bond prices rose modestly after the announcement; investment-grade bond funds gained about 0.4% on the day.",
+      "source": "Aurelius Markets Wire (demo)", "asset_classes": ["fixed_income"], "regions": ["us"], "price_change_pct": 0.4
+    },
+    {
+      "event_id": "EV-1004", "date": "2026-09-26", "type": "company_news", "severity": "high",
+      "headline": "ABC Industries announces two plant closures; shares drop 6%",
+      "summary": "The company will close two older plants by mid-2027 and take a restructuring charge. Pension plans are not affected.",
+      "source": "Aurelius Markets Wire (demo)", "symbols": ["ABC"], "price_change_pct": -6.0
+    },
+    {
+      "event_id": "EV-1005", "date": "2026-09-29", "type": "market_move", "severity": "medium",
+      "headline": "Emerging-market stocks slide as the dollar strengthens",
+      "summary": "Broad emerging-market equity indexes fell about 4.5% over three sessions.",
+      "source": "Aurelius Markets Wire (demo)", "asset_classes": ["equity"], "regions": ["emerging"], "price_change_pct": -4.5
+    },
+    {
+      "event_id": "EV-1006", "date": "2026-10-02", "type": "fund_change", "severity": "low",
+      "headline": "Aurelius International Bond Fund (AIBF) cuts its fee and changes benchmark",
+      "summary": "The expense ratio falls from 0.20% to 0.15% on November 1. No action needed from shareholders.",
+      "source": "Fund company notice (demo)", "symbols": ["AIBF"]
+    },
+    {
+      "event_id": "EV-1007", "date": "2026-09-22", "type": "market_move", "severity": "low",
+      "headline": "US stocks close at a record high",
+      "summary": "Broad US equity indexes rose about 1.8% over the week, led by industrial and financial stocks.",
+      "source": "Aurelius Markets Wire (demo)", "asset_classes": ["equity"], "regions": ["us"], "price_change_pct": 1.8
+    },
+    {
+      "event_id": "EV-1008", "date": "2026-09-10", "type": "rates", "severity": "low",
+      "headline": "European central bank cuts rates by a quarter point",
+      "summary": "International developed-market bonds and stocks rose slightly.",
+      "source": "Aurelius Markets Wire (demo)", "regions": ["international"], "price_change_pct": 0.5
+    }
+  ]
+}
