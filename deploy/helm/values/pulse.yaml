@@ -1,0 +1,8 @@
+# Pulse: market events (Go). Tiny footprint.
+port: 8301
+secretEnv: [SERVICE_TOKEN]
+env:
+  MCP_ADVISOR_TOOLS_URL: http://advisor-tools:8500/mcp
+resources:
+  requests: { cpu: 50m, memory: 32Mi }
+  limits: { memory: 128Mi }

@@ -1,0 +1,14 @@
+[
+  { "name": "conductor",     "lang": "python", "dir": "agents/python/orchestrator",       "context": "agents/python/orchestrator",       "dockerfile": "agents/python/orchestrator/Dockerfile",       "port": 8000, "health": "/health" },
+  { "name": "librarian",     "lang": "python", "dir": "agents/python/knowledge-rag",      "context": ".",                                "dockerfile": "agents/python/knowledge-rag/Dockerfile",      "port": 8001, "health": "/health" },
+  { "name": "analyst",       "lang": "python", "dir": "agents/python/portfolio-insights", "context": "agents/python/portfolio-insights", "dockerfile": "agents/python/portfolio-insights/Dockerfile", "port": 8002, "health": "/health" },
+  { "name": "scribe",        "lang": "python", "dir": "agents/python/meeting-intel",      "context": "agents/python/meeting-intel",      "dockerfile": "agents/python/meeting-intel/Dockerfile",      "port": 8003, "health": "/health" },
+  { "name": "sentinel",      "lang": "python", "dir": "agents/python/compliance-guard",   "context": "agents/python/compliance-guard",   "dockerfile": "agents/python/compliance-guard/Dockerfile",   "port": 8004, "health": "/health" },
+  { "name": "herald",        "lang": "node",   "dir": "agents/node/client-comms",         "context": "agents/node/client-comms",         "dockerfile": "agents/node/client-comms/Dockerfile",         "port": 8101, "health": "/health" },
+  { "name": "liaison",       "lang": "node",   "dir": "agents/node/crm-sync",             "context": "agents/node/crm-sync",             "dockerfile": "agents/node/crm-sync/Dockerfile",             "port": 8102, "health": "/health" },
+  { "name": "notary",        "lang": "java",   "dir": "agents/java/onboarding-kyc",       "context": "agents/java/onboarding-kyc",       "dockerfile": "agents/java/onboarding-kyc/Dockerfile",       "port": 8201, "health": "/health" },
+  { "name": "actuary",       "lang": "java",   "dir": "agents/java/risk-engine",          "context": "agents/java/risk-engine",          "dockerfile": "agents/java/risk-engine/Dockerfile",          "port": 8202, "health": "/health" },
+  { "name": "pulse",         "lang": "go",     "dir": "agents/go/market-pulse",           "context": "agents/go/market-pulse",           "dockerfile": "agents/go/market-pulse/Dockerfile",           "port": 8301, "health": "/health" },
+  { "name": "advisor-tools", "lang": "python", "dir": "mcp-servers/advisor-tools",        "context": "mcp-servers/advisor-tools",        "dockerfile": "mcp-servers/advisor-tools/Dockerfile",        "port": 8500, "health": "/health" },
+  { "name": "web",           "lang": "node",   "dir": "frontend/web",                     "context": "frontend/web",                     "dockerfile": "frontend/web/Dockerfile",                     "port": 8080, "health": "/healthz" }
+]

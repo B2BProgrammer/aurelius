@@ -1,0 +1,251 @@
+# CD: deploy images that CI already built, tested and pushed. NOTHING is rebuilt here.
+#
+#   Automatic : when CI succeeds on main -> deploy that commit to DEV, smoke test it,
+#               then WAIT for a person to approve -> promote the images to the prod repo
+#               in Artifactory -> deploy to PROD -> smoke test -> tag the release.
+#   Manual    : Actions -> CD -> Run workflow, pick a commit SHA and an environment.
+#               Re-deploying an older SHA is also how you roll back on purpose.
+#
+# Setup (GitHub repo -> Settings):
+#   Environments    "dev" and "production". On "production" add Required reviewers:
+#                   that's the approval gate.
+#   Variable        ARTIFACTORY_HOST    e.g. mycompany.jfrog.io
+#   Secrets         ARTIFACTORY_USER, ARTIFACTORY_TOKEN
+#                   KUBECONFIG_DEV, KUBECONFIG_PROD   (base64 of each cluster's kubeconfig;
+#                   in a company, swap this for OIDC login to EKS / AKS / GKE)
+#   In each cluster, once: the namespace, the "aurelius-secrets" Secret and the
+#   "artifactory-pull" Secret (see deploy/helm/secrets.example.yaml).
+
+name: CD
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: "Commit SHA to deploy (its images must already be in Artifactory)"
+        required: true
+      environment:
+        description: "Where to deploy"
+        type: choice
+        options: [dev, production]
+        default: dev
+
+permissions:
+  contents: write          # to tag the release at the end
+
+# Never run two deployments at the same time
+concurrency:
+  group: cd
+  cancel-in-progress: false
+
+env:
+  CHART: deploy/helm/aurelius-agent
+
+jobs:
+  # ------------------------------------------------------------------ 1. which version, where?
+  resolve:
+    name: Choose version
+    # automatic runs only when CI passed; manual runs always
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.pick.outputs.sha }}
+      services: ${{ steps.pick.outputs.services }}
+      to_dev: ${{ steps.pick.outputs.to_dev }}
+      to_prod: ${{ steps.pick.outputs.to_prod }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: pick
+        env:
+          INPUT_SHA: ${{ inputs.sha }}
+          INPUT_ENV: ${{ inputs.environment }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            sha="$INPUT_SHA"
+            to_dev=$([ "$INPUT_ENV" = "dev" ] && echo true || echo false)
+            to_prod=$([ "$INPUT_ENV" = "production" ] && echo true || echo false)
+          else
+            sha="$RUN_SHA"; to_dev=true; to_prod=true    # dev first, then prod after approval
+          fi
+          echo "$sha" | grep -Eq '^[0-9a-f]{40}$' || { echo "Not a full 40-character commit SHA: $sha"; exit 1; }
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "to_dev=$to_dev" >> "$GITHUB_OUTPUT"
+          echo "to_prod=$to_prod" >> "$GITHUB_OUTPUT"
+          echo "services=$(jq -c '[.[].name]' .github/services.json)" >> "$GITHUB_OUTPUT"
+          echo "Deploying $sha (dev: $to_dev, production: $to_prod)" >> "$GITHUB_STEP_SUMMARY"
+
+  # ------------------------------------------------------------------ 2. are the packages there?
+  verify:
+    name: Verify images exist in Artifactory
+    needs: resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.ARTIFACTORY_HOST }}
+          username: ${{ secrets.ARTIFACTORY_USER }}
+          password: ${{ secrets.ARTIFACTORY_TOKEN }}
+      - name: Check every image
+        env:
+          SHA: ${{ needs.resolve.outputs.sha }}
+          SERVICES: ${{ needs.resolve.outputs.services }}
+          # a manual prod deploy must use images that were already promoted
+          REPO: ${{ needs.resolve.outputs.to_dev == 'true' && 'aurelius-docker-dev' || 'aurelius-docker-prod' }}
+        run: |
+          missing=0
+          for svc in $(jq -r '.[]' <<<"$SERVICES"); do
+            image="${{ vars.ARTIFACTORY_HOST }}/$REPO/$svc:$SHA"
+            if docker buildx imagetools inspect "$image" > /dev/null 2>&1; then
+              echo "found   $image"
+            else
+              echo "MISSING $image"; missing=$((missing + 1))
+            fi
+          done
+          [ "$missing" -eq 0 ] || { echo "$missing image(s) missing: did CI pass for this commit?"; exit 1; }
+
+  # ------------------------------------------------------------------ 3. dev
+  deploy-dev:
+    name: Deploy to dev
+    needs: [resolve, verify]
+    if: needs.resolve.outputs.to_dev == 'true'
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      SHA: ${{ needs.resolve.outputs.sha }}
+      NAMESPACE: aurelius-dev
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}    # chart and values from the SAME commit as the images
+
+      - uses: azure/setup-helm@v4
+      - uses: azure/setup-kubectl@v4
+
+      - name: Connect to the dev cluster
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_DEV }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+          kubectl get namespace "$NAMESPACE"
+
+      - name: Deploy every service (MCP server and agents first, Conductor and web last)
+        run: |
+          set -e
+          deploy() {
+            echo "::group::$1"
+            # --atomic: if the new pods don't become healthy in time, Helm rolls this service back
+            helm upgrade --install "$1" "$CHART" -n "$NAMESPACE" \
+              -f "deploy/helm/values/$1.yaml" -f deploy/helm/environments/dev.yaml \
+              --set image.tag="$SHA" --atomic --wait --timeout 5m
+            echo "::endgroup::"
+          }
+          deploy advisor-tools
+          for svc in sentinel librarian analyst scribe herald liaison notary actuary pulse; do deploy "$svc"; done
+          deploy conductor
+          deploy web
+
+      - name: Smoke test through the web app
+        run: |
+          kubectl -n "$NAMESPACE" port-forward svc/web 8080:8080 > /dev/null 2>&1 &
+          sleep 3
+          DEV_LOGIN_PASSWORD="$(kubectl -n "$NAMESPACE" get secret aurelius-secrets \
+            -o jsonpath='{.data.DEV_LOGIN_PASSWORD}' | base64 -d)"
+          echo "::add-mask::$DEV_LOGIN_PASSWORD"
+          export DEV_LOGIN_PASSWORD
+          BASE=http://127.0.0.1:8080 bash deploy/smoke-test.sh
+
+  # ------------------------------------------------------------------ 4. production (after approval)
+  deploy-prod:
+    name: Promote and deploy to production
+    needs: [resolve, verify, deploy-dev]
+    # after a successful dev deploy, or a manual production deploy (dev skipped)
+    if: >-
+      always() && needs.resolve.outputs.to_prod == 'true' && needs.verify.result == 'success' &&
+      (needs.deploy-dev.result == 'success' || needs.deploy-dev.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment: production          # the run PAUSES here until a required reviewer approves
+    env:
+      SHA: ${{ needs.resolve.outputs.sha }}
+      NAMESPACE: aurelius-prod
+      SERVICES: ${{ needs.resolve.outputs.services }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+
+      - uses: azure/setup-helm@v4
+      - uses: azure/setup-kubectl@v4
+
+      - name: Set up the JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: https://${{ vars.ARTIFACTORY_HOST }}
+          JF_USER: ${{ secrets.ARTIFACTORY_USER }}
+          JF_ACCESS_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
+
+      - name: Promote the images dev -> prod in Artifactory (copy, same bytes, same tag)
+        if: needs.deploy-dev.result == 'success'      # a manual prod deploy was promoted before
+        run: |
+          for svc in $(jq -r '.[]' <<<"$SERVICES"); do
+            jf rt docker-promote "$svc" aurelius-docker-dev aurelius-docker-prod \
+              --source-tag "$SHA" --target-tag "$SHA" --copy
+            echo "promoted $svc:$SHA" | tee -a "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Connect to the production cluster
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_PROD }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+          kubectl get namespace "$NAMESPACE"
+
+      - name: Remember the current releases (for rollback)
+        run: helm list -n "$NAMESPACE" -o json | tee previous-releases.json
+
+      - name: Deploy every service
+        id: deploy
+        run: |
+          set -e
+          deploy() {
+            echo "::group::$1"
+            helm upgrade --install "$1" "$CHART" -n "$NAMESPACE" \
+              -f "deploy/helm/values/$1.yaml" -f deploy/helm/environments/prod.yaml \
+              --set image.tag="$SHA" --atomic --wait --timeout 5m
+            echo "::endgroup::"
+          }
+          deploy advisor-tools
+          for svc in sentinel librarian analyst scribe herald liaison notary actuary pulse; do deploy "$svc"; done
+          deploy conductor
+          deploy web
+
+      - name: Smoke test (health only, dev sign-in is off in production)
+        id: smoke
+        run: |
+          kubectl -n "$NAMESPACE" port-forward svc/web 8080:8080 > /dev/null 2>&1 &
+          sleep 3
+          BASE=http://127.0.0.1:8080 bash deploy/smoke-test.sh
+          for svc in $(jq -r '.[]' <<<"$SERVICES"); do
+            kubectl -n "$NAMESPACE" rollout status "deploy/$svc" --timeout 60s
+          done
+
+      - name: Roll back everything if the deploy or smoke test failed
+        if: failure() && (steps.deploy.outcome == 'failure' || steps.smoke.outcome == 'failure')
+        run: |
+          # Every release that existed before goes back to the exact revision that was running.
+          # (Not just "one back": --atomic may already have added a rollback revision.)
+          jq -r '.[] | "\(.name) \(.revision)"' previous-releases.json | while read -r svc rev; do
+            helm rollback "$svc" "$rev" -n "$NAMESPACE" --wait --timeout 5m || echo "could not roll back $svc"
+          done
+          echo "Production rolled back after a failed deploy of $SHA" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Tag the release in git
+        run: |
+          tag="release-$(date -u +%Y%m%d-%H%M)-${SHA:0:7}"
+          git tag "$tag" "$SHA"
+          git push origin "$tag"
+          echo "Released $SHA to production as $tag" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,9 @@
+# Your laptop: Docker Desktop's built-in Kubernetes. Uses the images that
+# "docker compose build" made (aurelius/<service>:local), so nothing is pulled.
+image:
+  registry: aurelius
+  tag: local
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+ingress:
+  enabled: false          # reach the web app with: kubectl -n aurelius port-forward svc/web 8080:8080

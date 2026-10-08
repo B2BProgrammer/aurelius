@@ -1,0 +1,3 @@
+# advisor-tools: the MCP server (read-only portfolio data).
+port: 8500
+secretEnv: [SERVICE_TOKEN]

@@ -1,0 +1,62 @@
+# Defaults for every Aurelius service. Each service overrides a few of these in
+# deploy/helm/values/<service>.yaml, and each environment in deploy/helm/environments/<env>.yaml.
+#
+#   helm upgrade --install conductor deploy/helm/aurelius-agent -n aurelius-dev \
+#     -f deploy/helm/values/conductor.yaml -f deploy/helm/environments/dev.yaml \
+#     --set image.tag=<git sha>
+
+image:
+  registry: ""              # e.g. mycompany.jfrog.io/aurelius-docker-dev (set per environment)
+  repository: ""            # image name; empty = the release name (conductor, librarian, ...)
+  tag: ""                   # REQUIRED: the git commit SHA that CI built and pushed
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []        # e.g. [{name: artifactory-pull}] so the cluster can pull from Artifactory
+
+replicaCount: 1
+port: 8000                  # the container port; the Service uses the same number
+healthPath: /health
+
+# Plain settings (not secret). Values may use Helm templating, e.g. {{ .Release.Namespace }}.
+env: {}
+
+# Secret settings: only the keys THIS service needs are copied from the Secret
+# (least privilege: the Liaison never sees the Anthropic key).
+secretName: aurelius-secrets
+secretEnv: []               # e.g. [SERVICE_TOKEN, ANTHROPIC_API_KEY]
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+# startup: allow slow starts (Java, the Librarian's indexing) before liveness kicks in
+probes:
+  startup:   { periodSeconds: 5,  failureThreshold: 36, timeoutSeconds: 3 }   # up to 3 minutes
+  readiness: { periodSeconds: 10, failureThreshold: 3,  timeoutSeconds: 3 }
+  liveness:  { periodSeconds: 20, failureThreshold: 3,  timeoutSeconds: 3 }
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+
+# Only the web app is exposed outside the cluster
+ingress:
+  enabled: false
+  className: nginx
+  host: ""                  # e.g. aurelius.dev.mycompany.com
+  tlsSecretName: ""         # empty = no TLS block
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]

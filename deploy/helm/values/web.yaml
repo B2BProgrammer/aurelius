@@ -1,0 +1,15 @@
+# Web app: nginx serving the React build, forwarding /v1/... to the Conductor.
+port: 8080
+healthPath: /healthz
+replicaCount: 2
+secretEnv: []
+env:
+  # nginx looks names up itself and doesn't use the cluster's short-name search,
+  # so the Conductor's address must be the full service name.
+  CONDUCTOR_URL: "http://conductor.{{ .Release.Namespace }}.svc.cluster.local:8000"
+resources:
+  requests: { cpu: 50m, memory: 32Mi }
+  limits: { memory: 128Mi }
+ingress:
+  enabled: true
+  # host and tlsSecretName are set per environment (environments/<env>.yaml)

@@ -1,0 +1,3 @@
+# Liaison: the CRM. Never needs the Anthropic key, so it doesn't get it.
+port: 8102
+secretEnv: [SERVICE_TOKEN]

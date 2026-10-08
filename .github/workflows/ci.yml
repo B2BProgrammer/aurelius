@@ -1,0 +1,345 @@
+# CI: build, test, scan and publish every Aurelius service.
+#
+#   Pull request : build + test + scan ONLY the services that changed. Nothing is published.
+#   Push to main : build + test + scan ALL services, push images to Artifactory (dev repo),
+#                  then run the whole system together (integration test).
+#                  When this succeeds, cd.yml deploys it.
+#
+# Setup (GitHub repo -> Settings -> Secrets and variables -> Actions):
+#   variable  ARTIFACTORY_HOST   e.g. mycompany.jfrog.io
+#   secret    ARTIFACTORY_USER
+#   secret    ARTIFACTORY_TOKEN  (an access token, not a password)
+# No Anthropic key is needed: CI uses the mock LLM, so it's free and repeatable.
+#
+# The list of services (folder, language, port) lives in .github/services.json.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch cancels the older run
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DEV_REGISTRY: ${{ vars.ARTIFACTORY_HOST }}/aurelius-docker-dev
+  GENERIC_REPO: aurelius-generic-dev
+  PUBLISH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+
+jobs:
+  # ------------------------------------------------------------------ 1. what changed?
+  changes:
+    name: Detect changed services
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.pick.outputs.services }}
+      mobile: ${{ steps.pick.outputs.mobile }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            conductor:     ['agents/python/orchestrator/**']
+            librarian:     ['agents/python/knowledge-rag/**', 'rag/data/**']
+            analyst:       ['agents/python/portfolio-insights/**']
+            scribe:        ['agents/python/meeting-intel/**']
+            sentinel:      ['agents/python/compliance-guard/**']
+            herald:        ['agents/node/client-comms/**']
+            liaison:       ['agents/node/crm-sync/**']
+            notary:        ['agents/java/onboarding-kyc/**']
+            actuary:       ['agents/java/risk-engine/**']
+            pulse:         ['agents/go/market-pulse/**']
+            advisor-tools: ['mcp-servers/advisor-tools/**']
+            web:           ['frontend/web/**']
+            mobile:        ['frontend/mobile/**']
+            pipeline:      ['.github/**', 'deploy/**']
+
+      - name: Pick the services to build
+        id: pick
+        env:
+          CHANGES: ${{ steps.filter.outputs.changes }}
+          PIPELINE_CHANGED: ${{ steps.filter.outputs.pipeline }}
+          MOBILE_CHANGED: ${{ steps.filter.outputs.mobile }}
+        run: |
+          # On main (and manual runs) build EVERYTHING, so every image gets this commit's tag.
+          # On a pull request build only what changed (everything if CI/deploy files changed).
+          if [ "$GITHUB_EVENT_NAME" != "pull_request" ] || [ "$PIPELINE_CHANGED" = "true" ]; then
+            services=$(jq -c '[.[].name]' .github/services.json)
+            mobile=true
+          else
+            services=$(jq -c --argjson all "$(jq -c '[.[].name]' .github/services.json)" \
+              '[.[] | select(. as $s | $all | index($s))]' <<<"$CHANGES")
+            mobile=$MOBILE_CHANGED
+          fi
+          echo "services=$services" >> "$GITHUB_OUTPUT"
+          echo "mobile=$mobile" >> "$GITHUB_OUTPUT"
+          echo "Building: $services (mobile: $mobile)"
+
+  # ------------------------------------------------------------------ 2. one job per service
+  build:
+    name: ${{ matrix.service }}
+    needs: changes
+    if: needs.changes.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false                  # one broken service doesn't hide the others' results
+      matrix:
+        service: ${{ fromJSON(needs.changes.outputs.services) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load this service's settings
+        id: svc
+        run: |
+          jq -r --arg s "${{ matrix.service }}" \
+            '.[] | select(.name == $s) | to_entries[] | "\(.key)=\(.value)"' .github/services.json >> "$GITHUB_OUTPUT"
+
+      # ---- toolchain (with dependency caches) ----
+      - if: steps.svc.outputs.lang == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: ${{ steps.svc.outputs.dir }}/requirements.txt
+
+      - if: steps.svc.outputs.lang == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ steps.svc.outputs.dir }}/package-lock.json
+
+      - if: steps.svc.outputs.lang == 'java'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - if: steps.svc.outputs.lang == 'java'
+        uses: actions/cache@v4
+        with:
+          # .mvn/maven.config keeps each Java agent's libraries in its own .m2 folder
+          path: ${{ steps.svc.outputs.dir }}/.m2/repository
+          key: maven-${{ matrix.service }}-${{ hashFiles(format('{0}/pom.xml', steps.svc.outputs.dir)) }}
+
+      - if: steps.svc.outputs.lang == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ steps.svc.outputs.dir }}/go.mod
+          cache: false                  # standard library only: nothing to cache
+
+      # ---- install, lint, unit test ----
+      - name: Python - install, lint, test
+        if: steps.svc.outputs.lang == 'python'
+        working-directory: ${{ steps.svc.outputs.dir }}
+        run: |
+          pip install -r requirements.txt ruff
+          ruff check src --select E9,F63,F7,F82      # syntax errors and undefined names
+          pytest -q --junitxml=test-results.xml
+
+      - name: Conductor - evals gate (AI quality must not drop)
+        if: matrix.service == 'conductor'
+        working-directory: ${{ steps.svc.outputs.dir }}
+        run: python evals/run_evals.py --gate     # fails if below evals/thresholds.json
+
+      - name: Node - install, type-check, test, build
+        if: steps.svc.outputs.lang == 'node'
+        working-directory: ${{ steps.svc.outputs.dir }}
+        run: |
+          npm ci
+          npm run typecheck
+          npm test
+          npm run build
+
+      - name: Java - compile, test, package
+        if: steps.svc.outputs.lang == 'java'
+        working-directory: ${{ steps.svc.outputs.dir }}
+        run: mvn -B verify
+
+      - name: Go - format, vet, test
+        if: steps.svc.outputs.lang == 'go'
+        working-directory: ${{ steps.svc.outputs.dir }}
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then echo "Run gofmt on: $unformatted"; exit 1; fi
+          go vet ./...
+          go test ./...
+
+      - name: Keep test reports and eval results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-${{ matrix.service }}
+          path: |
+            ${{ steps.svc.outputs.dir }}/test-results.xml
+            ${{ steps.svc.outputs.dir }}/evals/reports/latest-offline.md
+          if-no-files-found: ignore
+
+      # ---- image: build, scan, smoke test ----
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build the image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ steps.svc.outputs.context }}
+          file: ${{ steps.svc.outputs.dockerfile }}
+          tags: aurelius/${{ matrix.service }}:ci
+          load: true                    # keep it in this runner's Docker for the next steps
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+      - name: Scan the image (fail on CRITICAL vulnerabilities)
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.58.0 \
+            image --severity CRITICAL --ignore-unfixed --exit-code 1 --no-progress \
+            aurelius/${{ matrix.service }}:ci
+
+      - name: Smoke test (the container starts and /health answers)
+        env:
+          PORT: ${{ steps.svc.outputs.port }}
+          HEALTH: ${{ steps.svc.outputs.health }}
+        run: |
+          docker run -d --name smoke -p "$PORT:$PORT" \
+            -e SERVICE_TOKEN="$(openssl rand -hex 24)" \
+            -e JWT_SIGNING_KEY="$(openssl rand -hex 32)" \
+            -e LLM_MOCK=true -e MOCK_AGENTS=true -e EMBEDDING_PROVIDER=hash \
+            aurelius/${{ matrix.service }}:ci
+          for i in $(seq 1 45); do
+            if curl -fsS "http://127.0.0.1:$PORT$HEALTH"; then echo; echo "healthy after ~$((i*2))s"; exit 0; fi
+            sleep 2
+          done
+          echo "Not healthy after 90s. Container logs:"; docker logs smoke; exit 1
+
+      # ---- publish (main only): the SAME image that was just tested ----
+      - name: Log in to Artifactory
+        if: env.PUBLISH == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.ARTIFACTORY_HOST }}
+          username: ${{ secrets.ARTIFACTORY_USER }}
+          password: ${{ secrets.ARTIFACTORY_TOKEN }}
+
+      - name: Push to Artifactory (dev repo), tagged with the commit SHA
+        if: env.PUBLISH == 'true'
+        run: |
+          image="$DEV_REGISTRY/${{ matrix.service }}:${{ github.sha }}"
+          docker tag aurelius/${{ matrix.service }}:ci "$image"
+          docker push "$image"
+          echo "Pushed \`$image\`" >> "$GITHUB_STEP_SUMMARY"
+
+  # ------------------------------------------------------------------ 3. mobile app (no container)
+  mobile:
+    name: mobile (Flutter)
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4       # the Android build needs a JDK
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create the platform folders (if not committed) and get packages
+        run: |
+          # Adds missing android/ and web/ folders; never overwrites our files
+          flutter create --org com.aurelius --project-name atrium_mobile --platforms android,web .
+          flutter pub get
+
+      - name: Analyze and test
+        run: |
+          flutter analyze
+          flutter test
+
+      - name: Build the Android app
+        run: flutter build apk --release
+
+      - name: Upload the APK to Artifactory (generic repo)
+        if: env.PUBLISH == 'true'
+        env:
+          ART_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ART_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
+        run: |
+          url="https://${{ vars.ARTIFACTORY_HOST }}/artifactory/$GENERIC_REPO/atrium-mobile/${{ github.sha }}/atrium.apk"
+          curl -fsS -u "$ART_USER:$ART_TOKEN" -T build/app/outputs/flutter-apk/app-release.apk "$url"
+          echo "Uploaded \`$url\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atrium-apk
+          path: frontend/mobile/build/app/outputs/flutter-apk/app-release.apk
+
+  # ------------------------------------------------------------------ 4. whole system together
+  integration:
+    name: Integration test (all services)
+    needs: build
+    if: needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    env:
+      # main: test the images just pushed to Artifactory. Pull request: build them here.
+      REGISTRY: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('{0}/aurelius-docker-dev', vars.ARTIFACTORY_HOST) || 'aurelius' }}
+      TAG: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.sha || 'ci' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create a throw-away .env (random secrets, mock LLM)
+        run: |
+          password="ci-$(openssl rand -hex 8)"
+          echo "::add-mask::$password"
+          cat > .env <<EOF
+          SERVICE_TOKEN=$(openssl rand -hex 24)
+          JWT_SIGNING_KEY=$(openssl rand -hex 32)
+          DEV_LOGIN_PASSWORD=$password
+          LLM_MOCK=true
+          EMBEDDING_PROVIDER=hash
+          EOF
+          echo "DEV_LOGIN_PASSWORD=$password" >> "$GITHUB_ENV"
+
+      - name: Log in to Artifactory
+        if: env.PUBLISH == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.ARTIFACTORY_HOST }}
+          username: ${{ secrets.ARTIFACTORY_USER }}
+          password: ${{ secrets.ARTIFACTORY_TOKEN }}
+
+      - name: Start all 12 services
+        working-directory: deploy/compose
+        run: |
+          if [ "$PUBLISH" = "true" ]; then
+            docker compose pull --quiet
+            docker compose up -d --no-build --wait --wait-timeout 300
+          else
+            docker compose up -d --build --wait --wait-timeout 600
+          fi
+          docker compose ps
+
+      - name: End-to-end smoke test (sign in, all agents up, ask a question)
+        run: BASE=http://127.0.0.1:8080 bash deploy/smoke-test.sh
+
+      - name: Logs (on failure)
+        if: failure()
+        working-directory: deploy/compose
+        run: docker compose logs --no-color --tail 100
+
+      - name: Stop everything
+        if: always()
+        working-directory: deploy/compose
+        run: docker compose down

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: aurelius-agent
+description: >
+  One generic chart for every Aurelius service. All agents share the same shape
+  (one HTTP port, GET /health, POST /invoke), so a small values file per agent
+  is all that differs. Release name = service name = the DNS name other agents use.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

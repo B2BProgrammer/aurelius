@@ -1,0 +1,18 @@
+# Conductor: the only agent the apps talk to (through the web app's nginx).
+port: 8000
+# Conversation memory, rate limits and the daily cost cap live in memory, so run ONE copy.
+# (To scale out: move them to Redis first. A good interview talking point.)
+replicaCount: 1
+secretEnv: [SERVICE_TOKEN, ANTHROPIC_API_KEY, JWT_SIGNING_KEY, DEV_LOGIN_PASSWORD]
+env:
+  MOCK_AGENTS: "false"
+  SENTINEL_URL: http://sentinel:8004
+  LIBRARIAN_URL: http://librarian:8001
+  ANALYST_URL: http://analyst:8002
+  SCRIBE_URL: http://scribe:8003
+  HERALD_URL: http://herald:8101
+  LIAISON_URL: http://liaison:8102
+  NOTARY_URL: http://notary:8201
+  ACTUARY_URL: http://actuary:8202
+  PULSE_URL: http://pulse:8301
+  SENTINEL_FAIL_MODE: closed

@@ -1,0 +1,7 @@
+# Used only for THIS Dockerfile (BuildKit picks up "<Dockerfile name>.dockerignore").
+# The build context is the repo root, so ignore everything, then let in what we copy.
+*
+!agents/python/knowledge-rag/requirements.txt
+!agents/python/knowledge-rag/src
+!rag/data/sample-docs
+**/__pycache__

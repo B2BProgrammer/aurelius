@@ -1,0 +1,15 @@
+# A stable name and IP inside the cluster: other agents call http://<name>:<port>
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "agent.name" . }}
+  labels:
+    {{- include "agent.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "agent.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.port }}
+      targetPort: http

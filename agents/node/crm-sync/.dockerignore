@@ -1,0 +1,8 @@
+node_modules/
+dist/
+logs/
+tests/
+.env
+*.http
+*.md
+data/crm.json

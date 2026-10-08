@@ -1,0 +1,9 @@
+# Production cluster. CD PROMOTES the tested images from the dev repo to this one
+# (same bytes, same tag: nothing is rebuilt), then deploys from here.
+image:
+  registry: mycompany.jfrog.io/aurelius-docker-prod    # <- your Artifactory host
+imagePullSecrets:
+  - name: artifactory-pull
+ingress:
+  host: aurelius.mycompany.com                         # <- used by the web app only
+  tlsSecretName: aurelius-tls

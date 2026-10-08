@@ -1,0 +1,5 @@
+# Herald: drafts client emails (a person approves them).
+port: 8101
+secretEnv: [SERVICE_TOKEN, ANTHROPIC_API_KEY]
+env:
+  LIAISON_URL: http://liaison:8102

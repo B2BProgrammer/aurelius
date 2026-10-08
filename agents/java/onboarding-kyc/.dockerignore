@@ -1,0 +1,8 @@
+target/
+.m2/
+.mvn/
+logs/
+.env
+*.http
+*.md
+data/kyc.json

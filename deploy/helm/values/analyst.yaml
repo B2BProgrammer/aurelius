@@ -1,0 +1,5 @@
+# Analyst: portfolio maths, reads data through the MCP server.
+port: 8002
+secretEnv: [SERVICE_TOKEN, ANTHROPIC_API_KEY]
+env:
+  MCP_ADVISOR_TOOLS_URL: http://advisor-tools:8500/mcp

@@ -1,0 +1,9 @@
+# Librarian: RAG over the policy documents baked into the image.
+port: 8001
+secretEnv: [SERVICE_TOKEN, ANTHROPIC_API_KEY]
+env:
+  EMBEDDING_PROVIDER: minilm
+# Embedding model + vector index in memory: needs more RAM than the others
+resources:
+  requests: { cpu: 200m, memory: 512Mi }
+  limits: { memory: 1Gi }

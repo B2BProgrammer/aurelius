@@ -1,0 +1,8 @@
+# Development cluster. Applied AFTER the service file, so these win.
+# CI pushes every image here: <ARTIFACTORY_HOST>/aurelius-docker-dev/<service>:<git sha>
+image:
+  registry: mycompany.jfrog.io/aurelius-docker-dev     # <- your Artifactory host
+imagePullSecrets:
+  - name: artifactory-pull
+ingress:
+  host: aurelius.dev.mycompany.com                     # <- used by the web app only

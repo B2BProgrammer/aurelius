@@ -1,0 +1,157 @@
+# Aurelius: all 12 services on one machine with Docker.
+#
+#   cd deploy\compose
+#   docker compose up --build -d         # build images and start everything
+#   docker compose ps                    # status + health of each container
+#   docker compose logs -f conductor     # follow one service's logs
+#   docker compose down                  # stop and remove the containers
+#
+# Then open http://localhost:8080 (the web app). Sign in with DEV_LOGIN_PASSWORD.
+#
+# Settings come from aurelius\.env (the same file you use without Docker).
+# The "environment:" entries below override it with container-network values:
+# inside Docker, services find each other by NAME (http://sentinel:8004), not 127.0.0.1.
+#
+# Only the web app (8080) and the Conductor (8000, for the mobile app) are
+# published, and only on this computer (127.0.0.1). Every other agent is reachable
+# only by the other containers: the same "private network" idea as in production.
+#
+# Images: REGISTRY and TAG pick which images to use. Defaults build them locally;
+# CI sets REGISTRY=<artifactory>/aurelius-docker-dev and TAG=<git sha> to test pushed images.
+
+name: aurelius
+
+x-agent: &agent
+  env_file:
+    - path: ../../.env
+      required: false
+  restart: unless-stopped
+
+services:
+  # ---------------------------------------------------------------- MCP server
+  advisor-tools:
+    <<: *agent
+    image: ${REGISTRY:-aurelius}/advisor-tools:${TAG:-local}
+    build: ../../mcp-servers/advisor-tools
+    environment:
+      HOST: 0.0.0.0
+      MCP_PORT: "8500"
+
+  # ---------------------------------------------------------------- Python agents
+  sentinel:
+    <<: *agent
+    image: ${REGISTRY:-aurelius}/sentinel:${TAG:-local}
+    build: ../../agents/python/compliance-guard
+
+  librarian:
+    <<: *agent
+    image: ${REGISTRY:-aurelius}/librarian:${TAG:-local}
+    build:
+      context: ../..                                      # repo root: needs rag/data too
+      dockerfile: agents/python/knowledge-rag/Dockerfile
+    environment:
+      DOCS_DIR: /app/docs
+      CHROMA_DIR: /app/chroma-store
+
+  scribe:
+    <<: *agent
+    image: ${REGISTRY:-aurelius}/scribe:${TAG:-local}
+    build: ../../agents/python/meeting-intel
+
+  analyst:
+    <<: *agent
+    image: ${REGISTRY:-aurelius}/analyst:${TAG:-local}
+    build: ../../agents/python/portfolio-insights
+    environment:
+      MCP_ADVISOR_TOOLS_URL: http://advisor-tools:8500/mcp
+    depends_on:
+      advisor-tools: { condition: service_healthy }
+
+  # ---------------------------------------------------------------- Node agents
+  liaison:
+    <<: *agent
+    image: ${REGISTRY:-aurelius}/liaison:${TAG:-local}
+    build: ../../agents/node/crm-sync
+    environment:
+      LIAISON_HOST: 0.0.0.0
+
+  herald:
+    <<: *agent
+    image: ${REGISTRY:-aurelius}/herald:${TAG:-local}
+    build: ../../agents/node/client-comms
+    environment:
+      HERALD_HOST: 0.0.0.0
+      LIAISON_URL: http://liaison:8102
+    depends_on:
+      liaison: { condition: service_healthy }
+
+  # ---------------------------------------------------------------- Java agents
+  notary:
+    <<: *agent
+    image: ${REGISTRY:-aurelius}/notary:${TAG:-local}
+    build: ../../agents/java/onboarding-kyc
+    environment:
+      NOTARY_HOST: 0.0.0.0
+
+  actuary:
+    <<: *agent
+    image: ${REGISTRY:-aurelius}/actuary:${TAG:-local}
+    build: ../../agents/java/risk-engine
+    environment:
+      ACTUARY_HOST: 0.0.0.0
+      MCP_ADVISOR_TOOLS_URL: http://advisor-tools:8500/mcp
+    depends_on:
+      advisor-tools: { condition: service_healthy }
+
+  # ---------------------------------------------------------------- Go agent
+  pulse:
+    <<: *agent
+    image: ${REGISTRY:-aurelius}/pulse:${TAG:-local}
+    build: ../../agents/go/market-pulse
+    environment:
+      PULSE_HOST: 0.0.0.0
+      MCP_ADVISOR_TOOLS_URL: http://advisor-tools:8500/mcp
+    depends_on:
+      advisor-tools: { condition: service_healthy }
+
+  # ---------------------------------------------------------------- Conductor
+  conductor:
+    <<: *agent
+    image: ${REGISTRY:-aurelius}/conductor:${TAG:-local}
+    build: ../../agents/python/orchestrator
+    ports:
+      - "127.0.0.1:8000:8000"        # for the mobile app and API testing
+    environment:
+      MOCK_AGENTS: "false"           # all agents are running, so call them for real
+      SENTINEL_URL: http://sentinel:8004
+      LIBRARIAN_URL: http://librarian:8001
+      ANALYST_URL: http://analyst:8002
+      SCRIBE_URL: http://scribe:8003
+      HERALD_URL: http://herald:8101
+      LIAISON_URL: http://liaison:8102
+      NOTARY_URL: http://notary:8201
+      ACTUARY_URL: http://actuary:8202
+      PULSE_URL: http://pulse:8301
+      ALLOWED_ORIGINS: http://localhost:8080,http://127.0.0.1:8080,http://localhost:5174
+    depends_on:
+      sentinel: { condition: service_healthy }
+      librarian: { condition: service_healthy }
+      analyst: { condition: service_healthy }
+      scribe: { condition: service_healthy }
+      herald: { condition: service_healthy }
+      liaison: { condition: service_healthy }
+      notary: { condition: service_started }   # Java and Go images have no built-in health check
+      actuary: { condition: service_started }
+      pulse: { condition: service_started }
+
+  # ---------------------------------------------------------------- Web app
+  web:
+    image: ${REGISTRY:-aurelius}/web:${TAG:-local}
+    build: ../../frontend/web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      CONDUCTOR_URL: http://conductor:8000
+    depends_on:
+      conductor: { condition: service_healthy }

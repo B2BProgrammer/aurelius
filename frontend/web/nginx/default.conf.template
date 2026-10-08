@@ -1,0 +1,47 @@
+# Atrium web app: serves the built React files and forwards API calls to the Conductor.
+# ${CONDUCTOR_URL} and ${NGINX_LOCAL_RESOLVERS} are filled in when the container starts.
+#
+# LEARN: the browser only ever talks to THIS origin. /v1/... is passed on to the
+# Conductor, so there are no cross-origin (CORS) calls, same as Vite's dev proxy.
+
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+
+    # frame-ancestors only works as a real header (the <meta> CSP in index.html can't set it)
+    add_header Content-Security-Policy "frame-ancestors 'none'" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer" always;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    # The Conductor's address is looked up per request (resolver), so nginx starts
+    # even when the Conductor isn't running yet, and follows it if its IP changes.
+    resolver ${NGINX_LOCAL_RESOLVERS} valid=10s ipv6=off;
+    set $conductor ${CONDUCTOR_URL};
+
+    location /v1/ {
+        proxy_pass $conductor;
+        proxy_http_version 1.1;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # /v1/stream is Server-Sent Events: pass each event on immediately, keep it open
+        proxy_buffering off;
+        proxy_read_timeout 1h;
+    }
+
+    # Built files have a content hash in their name, so browsers may cache them for a year
+    location /assets/ {
+        expires 1y;
+    }
+
+    # React Router: any other path loads index.html and the app shows the right page
+    location / {
+        try_files $uri /index.html;
+    }
+}

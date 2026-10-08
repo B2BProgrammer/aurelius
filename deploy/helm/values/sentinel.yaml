@@ -1,0 +1,4 @@
+# Sentinel: guardrails. Every request passes through it, so run two copies.
+port: 8004
+replicaCount: 2
+secretEnv: [SERVICE_TOKEN, ANTHROPIC_API_KEY]
